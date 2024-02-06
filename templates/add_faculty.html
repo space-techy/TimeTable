@@ -1,0 +1,62 @@
+{% extends "index.html" %}
+
+
+{% block content %}
+
+
+    <div class="container text-center">
+        <div class="row justify-content-around">
+            <div class="col-4" style="background-color: lightgrey;">
+                <h3>Add Faculty</h3>
+                <hr>
+                <div class="add_sub">
+                    <form action="/add_faculty" method="POST">
+                        <label>Faculty Initials</label>
+                        <input type="text" name="faculty_initials">
+                        <br>
+                        <label>Faculty Name</label>
+                        <input type="text" name="faculty_name">
+                        <br>
+                        <label>Designation</label>
+                        <input type="text" name="faculty_designation">
+                        <br>
+                        <label>Qualification</label>
+                        <input type="text" name="faculty_qualification">
+                        <br>
+                        <label>Shared With Department</label>
+                        <input type="text" name="shared_dep">
+                        <br>
+                        <button type="submit"> Add Faculty</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-4" style="background-color:  blue;">
+                <h3>List of Faculty</h3>
+                <hr>
+                <div class="exist_table">
+                    <table style="width: 100%;">
+                        <tr>
+                            <th>Faculty Initials</th>
+                            <th>Faculty Name</th>
+                            <th>Designation</th>
+                            <th>Qualification</th>
+                            <th>Shared With Department</th>
+                            <th>Options</th>
+                        </tr>
+                        <tr>
+                            <td>Mr.</td>
+                            <td>Trial Sir</td>
+                            <td>HOD</td>
+                            <td>PhD</td>
+                            <td>ETXC</td>
+                            <td>Read/Write</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}

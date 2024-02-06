@@ -1,0 +1,21 @@
+
+
+.exist_table{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+th{
+    text-align: left;
+}
+
+td{
+    text-align: left;
+    padding-top: 1.5%;
+    padding-bottom: 1.5%;
+}
+
+tr{
+    border-bottom: solid black 1.5px;
+}

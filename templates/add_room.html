@@ -1,0 +1,57 @@
+{% extends "index.html" %}
+
+
+{% block content %}
+    
+
+
+    <div class="container text-center">
+        <div class="row justify-content-around">
+            <div class="col-4" style="background-color: lightgrey;">
+                <h3>Add Room</h3>
+                <hr>
+                <div class="add_sub">
+                    <form action="/add_room" method="POST">
+                        <label>Room Number</label>
+                        <input type="text" name="room_no">
+                        <br>
+                        <label>Room Description</label>
+                        <input type="text" name="room_desc">
+                        <br>
+                        <label>Shared With Department</label>
+                        <input type="text" name="shared_dep">
+                        <br>
+                        <button type="submit"> Add Room</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-4" style="background-color:  blue;">
+                <h3>List of Rooms</h3>
+                <br>
+                <div class="exist_table">
+                    <table style="width: 100%;">
+                        <tr>
+                            <th>Room Number</th>
+                            <th>Room Description</th>
+                            <th>Shared With Department</th>
+                            <th>Options</th>
+                        </tr>
+                        <tr>
+                            <td>B202</td>
+                            <td>Comps Department</td>
+                            <td>ETXC</td>
+                            <td>Read/Write</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+
+{% endblock %}

@@ -1,0 +1,49 @@
+/* This CSS file is for Login and Register Pages names log_reg.html */
+.navlog{
+    font-size: 30px;
+    background-color: #f8f8f8;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+.center_log{
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* background-color: ; */
+}
+
+.start_log{
+    margin-top: 5%;
+    width: 50%;
+    height: 75vh;
+    background-color: antiquewhite;
+    border-radius: 5%;
+}
+
+.log_h1{
+    margin-top: 2%;
+    margin-left: 30%;
+}
+
+.main_log_reg{
+    width: 50%;
+    margin-left: 30%;
+    margin-top: 10%;
+}
+
+.reg_body{
+    margin-top: 6%;
+}
+
+.lr_but{
+    margin-top: 5%;
+    margin-bottom: 2%;
+    padding-left: 2.5%;
+    padding-right: 2.5%;
+    padding-top: 2%;
+    padding-bottom: 2%;
+    background-color: lightgreen;
+    border-radius: 10.5%;
+}

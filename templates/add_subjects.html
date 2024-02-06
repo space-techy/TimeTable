@@ -1,0 +1,99 @@
+{% extends "index.html" %}
+
+
+{% block content %}
+
+
+
+    <div class="container text-center">
+        <div class="row justify-content-around">
+            <div class="col-4" style="background-color: lightgrey;">
+                <h3>Add Subjects</h3>
+                <hr>
+                <div class="add_sub">
+                    <form action="/add_subjects" method="POST">
+                        <label>Class</label>
+                        <select name="class_sub" class="form-select" aria-label="Default select example">
+                            <option value="SY B.Tech. COMP">SY Btech COMP</option>
+                            <option value="TY B.Tech. COMP">TY Btech COMP</option>
+                        </select>
+                        <label>Semester</label>
+                        <select  name="sem" class="form-select" aria-label="Default select example">
+                            <option value="odd">ODD</option>
+                            <option value="even">EVEN</option>
+                        </select>
+                        <label>Subject Code</label>
+                        <input type="text" name="sub_code">
+                        <br>
+                        <label>Subject Abb.</label>
+                        <input type="text" name="sub_abb">
+                        <br>
+                        <label>Subject Name</label>
+                        <input type="text" name="sub_name">
+                        <br>
+                        <label>Total Lecture</label>
+                        <input type="text" name="total_l" placeholder="L">
+                        <br>
+                        <label>Total Tutorial</label>
+                        <input type="text" name="total_t" placeholder="T">
+                        <br>
+                        <label>Total Practical</label>
+                        <input type="text" name="total_l" placeholder="P">
+                        <br>
+                        <label>Elective</label>
+                        <input type="text" name="elective" placeholder="YES/NO">
+                        <br>
+                        <button type="submit"> Add Subject</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-4" style="background-color:  blue;">
+                <h3>List of Subjects Already Added</h3>
+                <hr>
+                <div class="exist_table">
+                    <table style="width: 100%;">
+                        <tr>
+                            <th>Class</th>
+                            <th>Semester</th>
+                            <th>Subject Code</th>
+                            <th>Abb</th>
+                            <th>Subject Name</th>
+                            <th>L</th>
+                            <th>T</th>
+                            <th>P</th>
+                            <th>Elective</th>
+                            <th>Options</th>
+                        </tr>
+                        <tr>
+                            <td>2017_2018</td>
+                            <td>EVEN</td>
+                            <td>UCEC302</td>
+                            <td>OOPM</td>
+                            <td>Object Oriented Programming Language</td>
+                            <td>3</td>
+                            <td>0</td>
+                            <td>2</td>
+                            <td>NO</td>
+                            <td>Read/Write</td>
+                        </tr>
+                        <tr>
+                            <td>2017_2018</td>
+                            <td>EVEN</td>
+                            <td>UCEC302</td>
+                            <td>OOPM</td>
+                            <td>Object Oriented Programming Language</td>
+                            <td>3</td>
+                            <td>0</td>
+                            <td>2</td>
+                            <td>NO</td>
+                            <td>Read/Write</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}
