@@ -38,7 +38,7 @@
                         <input type="text" name="total_t" placeholder="T">
                         <br>
                         <label>Total Practical</label>
-                        <input type="text" name="total_l" placeholder="P">
+                        <input type="text" name="total_p" placeholder="P">
                         <br>
                         <label>Elective</label>
                         <input type="text" name="elective" placeholder="YES/NO">
@@ -88,6 +88,13 @@
                             <td>NO</td>
                             <td>Read/Write</td>
                         </tr>
+                        {% for i in subjects %}
+                            <tr>
+                                {% for j in i %}
+                                    <td>{{ j }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
                     </table>
                 </div>
             </div>

@@ -112,17 +112,29 @@ def hello_world():
 @login_required
 def add_subject():
     if request.method == "POST":
-        
+        sub_class = request.form.get("class_sub")
+        sub_sem = request.form.get("sem")
+        sub_code = request.form.get("sub_code")
+        sub_abb = request.form.get("sub_abb")
+        sub_name = request.form.get("sub_name")
+        subL = request.form.get("total_l")
+        subT = request.form.get("total_t")
+        subP = request.form.get("total_p")
+        subEelective = request.form.get("elective")
+        subInfo = (sub_class, sub_sem, sub_code, sub_abb, sub_name, subL, subT, subP, subEelective,)
+        subQuery = "INSERT INTO subjects( subclass, subsem, subcode, subabb, subname, sublecture, subtut, subprac, subelective) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        cursor.execute(subQuery, subInfo)
         return render_template("add_subjects.html")
     else:
-        return render_template("add_subjects.html")
+        cursor.execute("SELECT * FROM subjects")
+        subjects = cursor.fetchall()
+        return render_template("add_subjects.html",subjects = subjects)
 
 
 @app.route("/add_faculty", methods=["GET", "POST"])
 @login_required
 def add_faculty():
     if request.method == "POST":
-        print("Submitted by add faculty")
         return render_template("add_faculty.html")
     else:
         return render_template("add_faculty.html")
