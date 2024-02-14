@@ -112,7 +112,7 @@ def hello_world():
 @login_required
 def add_subject():
     if request.method == "POST":
-        print("Submitted by add subjects")
+        
         return render_template("add_subjects.html")
     else:
         return render_template("add_subjects.html")
