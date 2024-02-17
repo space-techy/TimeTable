@@ -123,8 +123,13 @@ def add_subject():
         subEelective = request.form.get("elective")
         subInfo = (sub_class, sub_sem, sub_code, sub_abb, sub_name, subL, subT, subP, subEelective,)
         subQuery = "INSERT INTO subjects( subclass, subsem, subcode, subabb, subname, sublecture, subtut, subprac, subelective) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        cursor.execute(subQuery, subInfo)
-        return render_template("add_subjects.html")
+        try:
+            cursor.execute(subQuery, subInfo)
+            return redirect("/add_subjects")
+        except:
+            cursor.execute("SELECT * FROM subjects")
+            subjects = cursor.fetchall()
+            return render_template("add_subjects.html", error = "Faculty Already Exists or Given Data is wrong!", subjects = subjects)
     else:
         cursor.execute("SELECT * FROM subjects")
         subjects = cursor.fetchall()
@@ -135,9 +140,24 @@ def add_subject():
 @login_required
 def add_faculty():
     if request.method == "POST":
-        return render_template("add_faculty.html")
+        facinit = request.form.get("faculty_initials")
+        facname = request.form.get("faculty_name")
+        facdes = request.form.get("faculty_designation")
+        facqual = request.form.get("faculty_qualification")
+        facshdep = request.form.get("shared_dep")
+        facInfo = ( facinit, facname, facdes, facqual, facshdep)
+        facQuery = "INSERT INTO faculty( facinit, facname, facdes, facqual, facshdep) VALUES(%s,%s,%s,%s,%s)"
+        try:
+            cursor.execute(facQuery, facInfo)
+            return redirect("/add_faculty")
+        except:
+            cursor.execute("SELECT * FROM faculty")
+            faculties = cursor.fetchall()
+            return render_template("add_faculty.html", error = "Faculty Already Exists or Input Given was Invalid!" ,faculties = faculties)
     else:
-        return render_template("add_faculty.html")
+        cursor.execute("SELECT * FROM faculty")
+        faculties = cursor.fetchall()
+        return render_template("add_faculty.html", faculties = faculties)
     
 
 
@@ -145,8 +165,20 @@ def add_faculty():
 @login_required
 def add_room():
     if request.method == "POST":
-        print("Submitted by add room")
-        return render_template("add_room.html")
+        roomno = request.form.get("room_no")
+        roomdesc = request.form.get("room_desc")
+        roomshdp = request.form.get("shared_dep")
+        roomInfo = ( roomno, roomdesc, roomshdp)
+        roomQuery = "INSERT INTO rooms( roomno, roomdes, roomshdep) VALUES(%s,%s,%s)"
+        try:
+            cursor.execute( roomQuery, roomInfo)
+            return redirect("/add_room")
+        except:
+            cursor.execute("SELECT * FROM rooms")
+            rooms = cursor.fetchall()
+            return render_template("add_room.html", error = "Room Already Exists or Given Input is Invalid!" , rooms = rooms)
     else:
-        return render_template("add_room.html")
+        cursor.execute("SELECT * FROM rooms")
+        rooms = cursor.fetchall()
+        return render_template("add_room.html", rooms = rooms)
     

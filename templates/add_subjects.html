@@ -10,6 +10,7 @@
             <div class="col-4" style="background-color: lightgrey;">
                 <h3>Add Subjects</h3>
                 <hr>
+                {{ error }}
                 <div class="add_sub">
                     <form action="/add_subjects" method="POST">
                         <label>Class</label>
@@ -64,35 +65,12 @@
                             <th>Elective</th>
                             <th>Options</th>
                         </tr>
-                        <tr>
-                            <td>2017_2018</td>
-                            <td>EVEN</td>
-                            <td>UCEC302</td>
-                            <td>OOPM</td>
-                            <td>Object Oriented Programming Language</td>
-                            <td>3</td>
-                            <td>0</td>
-                            <td>2</td>
-                            <td>NO</td>
-                            <td>Read/Write</td>
-                        </tr>
-                        <tr>
-                            <td>2017_2018</td>
-                            <td>EVEN</td>
-                            <td>UCEC302</td>
-                            <td>OOPM</td>
-                            <td>Object Oriented Programming Language</td>
-                            <td>3</td>
-                            <td>0</td>
-                            <td>2</td>
-                            <td>NO</td>
-                            <td>Read/Write</td>
-                        </tr>
                         {% for i in subjects %}
                             <tr>
-                                {% for j in i %}
+                                {% for j in i[1:] %}
                                     <td>{{ j }}</td>
                                 {% endfor %}
+                                <td>Read/Write</td>
                             </tr>
                         {% endfor %}
                     </table>

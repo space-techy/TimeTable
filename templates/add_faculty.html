@@ -43,14 +43,14 @@
                             <th>Shared With Department</th>
                             <th>Options</th>
                         </tr>
-                        <tr>
-                            <td>Mr.</td>
-                            <td>Trial Sir</td>
-                            <td>HOD</td>
-                            <td>PhD</td>
-                            <td>ETXC</td>
-                            <td>Read/Write</td>
-                        </tr>
+                        {% for i in faculties %}
+                            <tr>
+                                {% for j in i[1:] %}
+                                    <td>{{ j }}</td>
+                                {% endfor %}
+                                <td>Read/Write</td>
+                            </tr>
+                        {% endfor %}
                     </table>
                 </div>
             </div>
