@@ -102,10 +102,16 @@ def reg_red():
 
 
 #This route is for redirecting to our main website page after logging in
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 @login_required
-def hello_world():
-    return render_template("main_body.html")
+def home():
+    if request.method == "POST":
+        year = request.form.get("year_session")
+        sem = request.form.get("sem").lower()
+        sem_year = sem + "_" + year
+        cr_table = "CREATE TABLE %s()"
+    else:
+        return render_template("main_body.html")
 
 
 @app.route("/add_subjects", methods=["GET", "POST"])
@@ -182,4 +188,22 @@ def add_room():
         rooms = cursor.fetchall()
         return render_template("add_room.html", rooms = rooms)
     
+
+@app.route("/assign_slots", methods=["GET","POST"])
+@login_required
+def assign_slots():
+    if request.method == "POST":
+        return render_template("assign.html")
+    else:
+        return render_template("assign.html")
+    
+
+
+@app.route("/show_timetable", methods=["GET","POST"])
+@login_required
+def show_timetable():
+    if request.method == "POST":
+        return render_template("show_timetable.html")
+    else:
+        return render_template("show_timetable.html")
     
