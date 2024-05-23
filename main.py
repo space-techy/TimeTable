@@ -182,3 +182,4 @@ def add_room():
         rooms = cursor.fetchall()
         return render_template("add_room.html", rooms = rooms)
     
+    

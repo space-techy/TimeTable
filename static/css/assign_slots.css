@@ -1,0 +1,82 @@
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+}
+
+.container {
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+}
+
+.form-container,
+.assigned-slots-container {
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 5px;
+    width: 45%;
+}
+
+h2 {
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 5px;
+}
+
+select, input[type="text"] {
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.btn {
+    padding: 10px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    margin-top: 5px;
+    border-radius: 4px;
+}
+
+.assign-theory {
+    background-color: #4CAF50; /* Green */
+}
+
+.assign-practical {
+    background-color: #f44336; /* Red */
+}
+
+.assigned-slots {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.assigned-slots, .assigned-slots th, .assigned-slots td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.assigned-slots th {
+    background-color: #f2f2f2;
+}
+
+.assigned-slots td {
+    text-align: center;
+}
+
+.form-buttons {
+    display: flex;
+    justify-content: space-between;
+}

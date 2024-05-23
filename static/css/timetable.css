@@ -1,0 +1,50 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.timetable-container {
+    max-width: 800px;
+    margin: 20px auto;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 24px;
+}
+
+header p {
+    margin: 5px 0;
+}
+
+.class-info {
+    margin: 20px 0;
+    font-weight: bold;
+}
+
+.timetable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.timetable th, .timetable td {
+    border: 1px solid black;
+    padding: 5px;
+    text-align: left;
+}
+
+.timetable th {
+    background-color: #ddd;
+}
+
+.timetable thead th {
+    text-align: center;
+}
+
+.timetable tfoot td {
+    font-weight: bold;
+}
+
+.timetable td[colspan="5"] {
+    text-align: center;
+}

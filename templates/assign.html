@@ -1,0 +1,103 @@
+{% extends "index.html" %}
+
+
+{% block content %}
+
+<div class="container">
+    <div class="form-container">
+        <h2>Assign Theory Slots</h2>
+        <form id="slot-form">
+            <label for="class">Class</label>
+            <select id="class" name="class">
+                <!-- Example Class options -->
+                <option value="class1">Class 1</option>
+                <option value="class2">Class 2</option>
+                <!-- Add other class options here -->
+            </select>
+
+            <label for="division">Division</label>
+            <select id="division" name="division">
+                <!-- Example Division options -->
+                <option value="divisionA">A</option>
+                <option value="divisionB">B</option>
+                <!-- Add other division options here -->
+            </select>
+
+            <label for="subject">Subject</label>
+            <select id="subject" name="subject">
+                <!-- Example Subject options -->
+                <option value="subject1">Mathematics</option>
+                <option value="subject2">Physics</option>
+                <!-- Add other subject options here -->
+            </select>
+
+            <label for="room">Room</label>
+            <input type="text" id="room" name="room">
+
+            <label for="faculty">Faculty</label>
+            <input type="text" id="faculty" name="faculty">
+
+            <label for="multiple-faculty">Multiple Faculty</label>
+            <input type="text" id="multiple-faculty" name="multiple-faculty">
+
+            <label for="batch">Batch</label>
+            <select id="batch" name="batch">
+                <!-- Example Batch options -->
+                <option value="batch1">Batch 1</option>
+                <option value="batch2">Batch 2</option>
+                <!-- Add other batch options here -->
+            </select>
+
+            <label for="slots">Select Slots</label>
+            <select id="slots" name="slots" multiple>
+                <!-- Example Slot options -->
+                <option value="slot1">L1|8:00-9:00|Friday</option>
+                <option value="slot2">L2|9:00-10:00|Friday</option>
+                <!-- Add other slots options here -->
+            </select>
+
+            <div class="form-buttons">
+                <button type="submit" class="btn assign-theory">Assign Theory</button>
+                <button type="submit" class="btn assign-practical">Assign Practical</button>
+            </div>
+        </form>
+    </div>
+    <div class="assigned-slots-container">
+        <h2>Assigned Slots</h2>
+        <table class="assigned-slots">
+            <thead>
+                <tr>
+                    <th>Class</th>
+                    <th>Subject</th>
+                    <th>Slot</th>
+                    <th>Day</th>
+                    <th>Time</th>
+                    <th>Faculty</th>
+                    <th>Room</th>
+                    <th>Batch</th>
+                    <th>Type</th>
+                    <th>Options</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Placeholder row -->
+                <tr>
+                    <td>Class 1</td>
+                    <td>Mathematics</td>
+                    <td>L1</td>
+                    <td>Friday</td>
+                    <td>8:00-9:00</td>
+                    <td>Dr. Smith</td>
+                    <td>Room 101</td>
+                    <td>Batch 1</td>
+                    <td>Theory</td>
+                    <td>Edit/Delete</td>
+                </tr>
+                <!-- Additional rows of assigned slots will be dynamically inserted here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+{% endblock content %}

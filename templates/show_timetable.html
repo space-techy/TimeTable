@@ -1,0 +1,41 @@
+{% extends "index.html" %}
+
+{% block content %}
+
+    <div class="timetable-container">
+        <header>
+            <h1>K. J. Somaiya College of Engineering</h1>
+            <p>(A Constituent College of Somaiya Vidyavihar University)</p>
+            <h2>Time Table</h2>
+        </header>
+        <section class="class-info">
+            <strong>CLASS: SY M.Tech. ADMIN</strong><br>
+            <strong>ACADEMIC YEAR: 2023-2024 SEMESTER: EVEN</strong>
+        </section>
+        <table class="timetable">
+            <thead>
+                <tr>
+                    <th>Time/Day</th>
+                    <th>Monday</th>
+                    <th>Tuesday</th>
+                    <th>Wednesday</th>
+                    <th>Thursday</th>
+                    <th>Friday</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows for each hour -->
+                <tr><td>7:00-8:00</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <!-- More rows corresponding to each hour -->
+                <!-- ... -->
+                <tr><td>12:00-1:00</td><td colspan="5">Lunch Break</td></tr>
+                <!-- ... -->
+                <tr><td>6:00-7:00</td><td></td><td></td><td></td><td></td><td></td></tr>
+            </tbody>
+            <tfoot>
+                <tr><td>H.O.D</td><td colspan="4"></td><td>PRINCIPAL</td></tr>
+            </tfoot>
+        </table>
+    </div>
+
+{% endblock content %}
