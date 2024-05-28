@@ -12,7 +12,7 @@
                     <hr>
                 </div>
                 <div class="cr_year_sem">
-                    <form action="/" method="POST">
+                    <form action="/create_timetable" method="POST">
                         <label>Year/Session</label>
                         <input type="text" name="year_session" placeholder="Year or Session">
                         <p>Write Year e.g 2022_2023 </p>
@@ -38,6 +38,13 @@
                             <th>Semester</th>
                             <th>Options</th>
                         </tr>
+                        {% for sem_t in sems_table %}
+                            <tr>
+                                <td>{{ sem_t[0] }}</td>
+                                <td>{{ sem_t[1] }}</td>
+                                <td>Read/Write</td>
+                            </tr>
+                        {% endfor %}
                         <tr>
                             <td>2017_2018</td>
                             <td>EVEN</td>

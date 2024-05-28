@@ -28,12 +28,16 @@ config = {
     'host': "localhost",
     'user': "root",
     'password': "root",
-    'database': "KJSCE_Timetable"
+    'database': "KJSCE_Timetable",
 }
 
 #This is for connecting MySQL connector to python
 conn = mysql.connect(**config)
 cursor = conn.cursor()
+
+
+#This variable is created globally so that it can keep track of which timetable we are currently in
+curr_year_sem = ""
 
 #This is for users to log in
 @app.route("/login", methods=["GET","POST"], endpoint = "login")
@@ -106,12 +110,53 @@ def reg_red():
 @login_required
 def home():
     if request.method == "POST":
+        return render_template("main_body.html")
+
+    else:
+        cursor.execute("SELECT year,sem FROM all_timetables")
+        sems_table = cursor.fetchall()
+        print(sems_table)
+        return render_template("main_body.html",sems_table = sems_table)
+
+
+
+@app.route("/create_timetable", methods=["GET", "POST"])
+@login_required
+def create_timetable():
+    if request.method == "POST":
         year = request.form.get("year_session")
         sem = request.form.get("sem").lower()
         sem_year = sem + "_" + year
-        cr_table = "CREATE TABLE %s()"
+        global curr_year_sem 
+        curr_year_sem = sem_year
+        insert_query = "INSERT INTO all_timetables( year, sem, year_sem) VALUES ( %s, %s, %s)"
+        create_query = f"""CREATE TABLE {sem_year}(
+            id SERIAL,
+            class VARCHAR(250) NOT NULL,
+            subject VARCHAR(500) NOT NULL,
+            slot VARCHAR(50) NOT NULL,
+            day VARCHAR(250) NOT NULL,
+            time VARCHAR(250) NOT NULL,
+            faculty varchar(250) NOT NULL,
+            room varchar(250) NOT NULL,
+            batch varchar(200) NOT NULL,
+            type varchar(100) NOT NULL,
+            branch varchar(250) NOT NULL
+        )"""
+        print(sem,year,sem_year)
+        print(create_query)
+        try:
+            cursor.execute(insert_query, ( year, sem.upper(), sem_year))
+            cursor.execute(create_query)
+            conn.commit()
+            return redirect("/assign_slots")
+        except mysql.Error as error:
+            conn.rollback()
+            print("MySQL Error: ", error)
+            return render_template("main_body.html")
     else:
         return render_template("main_body.html")
+
 
 
 @app.route("/add_subjects", methods=["GET", "POST"])
