@@ -234,6 +234,17 @@ def add_room():
         return render_template("add_room.html", rooms = rooms)
     
 
+@app.route("/add_div", methods=[ "GET", "POST"])
+@login_required
+def add_div():
+    if request.method == "POST":
+        return render_template("add_div.html")
+    else:
+        return render_template("add_div.html")
+
+
+    
+
 @app.route("/assign_slots", methods=["GET","POST"])
 @login_required
 def assign_slots():
@@ -252,3 +263,5 @@ def show_timetable():
     else:
         return render_template("show_timetable.html")
     
+
+
