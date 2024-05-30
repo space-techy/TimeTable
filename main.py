@@ -200,6 +200,7 @@ def add_faculty():
         facQuery = "INSERT INTO faculty( facinit, facname, facdes, facqual, facshdep) VALUES(%s,%s,%s,%s,%s)"
         try:
             cursor.execute(facQuery, facInfo)
+            conn.commit()
             return redirect("/add_faculty")
         except:
             cursor.execute("SELECT * FROM faculty")
@@ -223,11 +224,12 @@ def add_room():
         roomQuery = "INSERT INTO rooms( roomno, roomdes, roomshdep) VALUES(%s,%s,%s)"
         try:
             cursor.execute( roomQuery, roomInfo)
+            conn.commit()
             return redirect("/add_room")
-        except:
+        except mysql.errors as error:
             cursor.execute("SELECT * FROM rooms")
             rooms = cursor.fetchall()
-            return render_template("add_room.html", error = "Room Already Exists or Given Input is Invalid!" , rooms = rooms)
+            return render_template("add_room.html", error = error , rooms = rooms)
     else:
         cursor.execute("SELECT * FROM rooms")
         rooms = cursor.fetchall()
@@ -238,9 +240,26 @@ def add_room():
 @login_required
 def add_div():
     if request.method == "POST":
-        return render_template("add_div.html")
+        year = request.form.get("year")
+        course = request.form.get("course")
+        department = request.form.get("department")
+        batch = request.form.get("batch")
+        divisions = request.form.get("no_div")
+        div_para = (year, course, department, batch, divisions)
+        div_insert = "INSERT INTO divisions( year, course, department, batch, no_of_div) VALUES( %s, %s, %s, %s, %s)"
+        try:
+            cursor.execute(div_insert, div_para)
+            conn.commit()
+            return redirect("/add_div")
+        except mysql.errors as error:
+            cursor.execute("SELECT * FROM divisions")
+            div_table = cursor.fetchall()
+            return render_template("add_div.html", error = error, div_table = div_table)
     else:
-        return render_template("add_div.html")
+        cursor.execute("SELECT * FROM divisions")
+        div_table = cursor.fetchall()
+        print(div_table)
+        return render_template("add_div.html", div_table = div_table)
 
 
     

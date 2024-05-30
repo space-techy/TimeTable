@@ -72,3 +72,15 @@ CREATE TABLE 'You can give any name'(
     type varchar(100) NOT NULL,
     branch varchar(250) NOT NULL
 );
+
+
+-- Table for creating divisions for a batch
+
+CREATE TABLE divisions(
+    id SERIAL NOT NULL,
+    year VARCHAR(10) NOT NULL,
+    course VARCHAR(100) NOT NULL,
+    department VARCHAR(100) NOT NULL,
+    batch VARCHAR(10) NOT NULL,
+    no_of_div INT(10) NOT NULL
+);
