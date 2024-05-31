@@ -40,9 +40,15 @@
                         </tr>
                         {% for sem_t in sems_table %}
                             <tr>
-                                <td>{{ sem_t[0] }}</td>
                                 <td>{{ sem_t[1] }}</td>
-                                <td>Read/Write</td>
+                                <td>{{ sem_t[2] }}</td>
+                                <td>
+                                    <form action="/edit_or_show_timetable" method="post">
+                                        <input type="hidden" name="year_sem_id" value="{{ sem_t[0] }}">
+                                        <button name="action" type="submit" value="edit">Edit</button>
+                                        <button name="action" type="submit" value="show">Show</button>
+                                    </form>
+                                </td>
                             </tr>
                         {% endfor %}
                         <tr>

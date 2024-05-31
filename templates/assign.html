@@ -45,7 +45,7 @@
             <label for="batch">Batch</label>
             <select id="batch" name="batch">
                 <!-- Example Batch options -->
-                <option value="B">Whole Batch (B)</option>
+                <option value="NO">NO</option>
                 <option value="batch1">Batch 1</option>
                 <option value="batch2">Batch 2</option>
                 <!-- Add other batch options here -->
@@ -54,8 +54,8 @@
             <label for="slots">Select Slots</label>
             <select id="slots" name="slots" multiple>
                 <!-- Example Slot options -->
-                <option value="slot1">L1|8:00-9:00|Friday</option>
-                <option value="slot2">L2|9:00-10:00|Friday</option>
+                <option value="A1">L1|8:00-9:00|Friday</option>
+                <option value="B1">L2|9:00-10:00|Friday</option>
                 <!-- Add other slots options here -->
             </select>
 
@@ -67,6 +67,7 @@
     </div>
     <div class="assigned-slots-container">
         <h2>Assigned Slots</h2>
+        <h2>{{ g.CURR_USER }} DEPARTMENT</h2>
         <table class="assigned-slots">
             <thead>
                 <tr>
@@ -77,6 +78,7 @@
                     <th>Time</th>
                     <th>Faculty</th>
                     <th>Room</th>
+                    <th>Division</th>
                     <th>Batch</th>
                     <th>Type</th>
                     <th>Options</th>
@@ -84,18 +86,13 @@
             </thead>
             <tbody>
                 <!-- Placeholder row -->
-                <tr>
-                    <td>Class 1</td>
-                    <td>Mathematics</td>
-                    <td>L1</td>
-                    <td>Friday</td>
-                    <td>8:00-9:00</td>
-                    <td>Dr. Smith</td>
-                    <td>Room 101</td>
-                    <td>Batch 1</td>
-                    <td>Theory</td>
-                    <td>Edit/Delete</td>
-                </tr>
+                {% for row in results %}
+                    <tr>
+                        {% for data in row[1:] %}
+                            <td>{{ data }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
                 <!-- Additional rows of assigned slots will be dynamically inserted here -->
             </tbody>
         </table>

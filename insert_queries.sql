@@ -59,7 +59,7 @@ INSERT INTO time_slots( day, time, slots_name, slot_time_day) VALUES( "Friday", 
 -- We can continue another sql entries but we need to enter comments with table name at top to make it easier to understand
 
 
--- This insert query is for /assign_slots while creating slots
+-- This insert query is for /assign_slots while creating slots to add whole data into the table
 
 INSERT INTO 'TABLE_NAME_DYNAMIC'(
     class,
@@ -71,19 +71,21 @@ INSERT INTO 'TABLE_NAME_DYNAMIC'(
     room,
     batch,
     type,
-    branch
+    branch,
+    division
 ) VALUES (
     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
 )
 
 
--- This query to get time and day with slot
+-- This query to get time and day with slot from time_slots
+SELECT day,time FROM time_slots
+WHERE slots_name = slots;
 
 
+-- This query is for which type of subject it is whether it is an elective or not
 
-
-
-
+SELECT subelective FROM subjects WHERE subabb = subject;
 
 
 

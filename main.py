@@ -38,11 +38,13 @@ cursor = conn.cursor()
 
 #This variable is created globally so that it can keep track of which timetable we are currently in
 CURR_YEAR_SEM = ""
-
+CURR_BRANCH = ""
 
 @app.before_request
 def load_user():
     g.CURR_USER = session.get("username")
+    global CURR_BRANCH
+    CURR_BRANCH = session.get("username")
 
 
 #This is for users to log in
@@ -120,7 +122,7 @@ def home():
     if request.method == "POST":
         return render_template("main_body.html", sems_table = sems_table)
     else:
-        cursor.execute("SELECT year,sem FROM all_timetables")
+        cursor.execute("SELECT id,year,sem FROM all_timetables")
         sems_table = cursor.fetchall()
         print(sems_table)
         return render_template("main_body.html", sems_table = sems_table)
@@ -144,13 +146,13 @@ def create_timetable():
             slot VARCHAR(50) NOT NULL,
             day VARCHAR(250) NOT NULL,
             time VARCHAR(250) NOT NULL,
-            faculty varchar(250) NOT NULL,
-            room varchar(250) NOT NULL,
-            batch varchar(200) NOT NULL,
-            type varchar(100) NOT NULL,
-            branch varchar(250) NOT NULL
+            faculty VARCHAR(250) NOT NULL,
+            room VARCHAR(250) NOT NULL,
+            batch VARCHAR(200) NOT NULL,
+            type VARCHAR(100) NOT NULL,
+            branch VARCHAR(250) NOT NULL,
+            division VARCHAR(250) NOT NULL
         )"""
-        print(sem,year,sem_year)
         print(create_query)
         try:
             cursor.execute(insert_query, ( year, sem.upper(), sem_year))
@@ -163,6 +165,24 @@ def create_timetable():
             return render_template("main_body.html")
     else:
         return render_template("main_body.html")
+
+@app.route("/edit_or_show_timetable", methods = [ "GET", "POST"])
+@login_required
+def edorsho():
+    if request.method == "POST":
+        global CURR_YEAR_SEM
+        val = request.form.get("action")
+        year_sem_id = request.form.get("year_sem_id")
+        query_edit = "SELECT year_sem FROM all_timetables WHERE id = %s"
+        cursor.execute(query_edit , (year_sem_id,))
+        year_sem = cursor.fetchall()[0][0]
+        CURR_YEAR_SEM = year_sem
+        if(val == "edit"):
+            return redirect("/assign_slots")
+        else:
+            return redirect ("/show_timetable")
+    else:
+        return redirect("/")
 
 
 
@@ -274,6 +294,8 @@ def add_div():
 @app.route("/assign_slots", methods=["GET","POST"])
 @login_required
 def assign_slots():
+    global CURR_BRANCH
+    global CURR_YEAR_SEM
     if request.method == "POST":
         college_class = request.form.get("class")
         division = request.form.get("division")
@@ -282,11 +304,46 @@ def assign_slots():
         faculty = request.form.get("faculty")
         mult_faculty = request.form.get("multiple-faculty")
         batch = request.form.get("batch")
-        slots = request.form.get("slots")
-        assign_para = ( college_class, subject, )
-        return redirect("/assign_slots")
+        slots = request.form.getlist("slots")
+        type_submit = request.form.get("submit-button")
+        if(len(mult_faculty) > 0):
+            faculty = faculty.strip() + "/" + mult_faculty.strip()
+        if(len(slots) > 1):
+            for slot in slots:
+                search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+                cursor.execute(search_query, (slot,))
+                time_slots = cursor.fetchall()[0]
+                cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
+                subelective = cursor.fetchall()
+                if(subelective == "YES"):
+                    type_sub = "E".strip() + type_submit.strip()
+                else:
+                    type_sub = type_submit
+                insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
+                insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
+                cursor.execute(insert_query,insert_para)
+                conn.commit()
+            return redirect("/assign_slots")
+        else:
+            search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+            cursor.execute(search_query, (slots[0],))
+            time_slots = cursor.fetchall()[0]
+            cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
+            subelective = cursor.fetchall()[0]
+            if(subelective == "YES"):
+                type_sub = "E".strip() + type_submit.strip()
+            else:
+                type_sub = type_submit
+            insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
+            insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
+            cursor.execute(insert_query,insert_para)
+            conn.commit()
+            return redirect("/assign_slots")
     else:
-        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM)
+        query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results)
     
 
 
