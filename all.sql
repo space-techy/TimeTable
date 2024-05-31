@@ -39,9 +39,10 @@ CREATE TABLE rooms(
 
 CREATE TABLE time_slots(
     id SERIAL,
+    slots_name VARCHAR(500) UNIQUE PRIMARY KEY,
     day VARCHAR(250),
     time VARCHAR(500),
-    slots_name VARCHAR(500) UNIQUE PRIMARY KEY
+    slot_time_day VARCHAR(500)
 );
 
 

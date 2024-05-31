@@ -5,6 +5,7 @@
 
 <div class="container">
     <div class="form-container">
+        <p>{{ error }}</p>
         <h2>Assign Theory Slots</h2>
         <h2>{{ CURR_YEAR_SEM }}</h2>
         <form action="/assign_slots" id="slot-form" method="POST">
@@ -44,6 +45,7 @@
             <label for="batch">Batch</label>
             <select id="batch" name="batch">
                 <!-- Example Batch options -->
+                <option value="B">Whole Batch (B)</option>
                 <option value="batch1">Batch 1</option>
                 <option value="batch2">Batch 2</option>
                 <!-- Add other batch options here -->

@@ -275,6 +275,15 @@ def add_div():
 @login_required
 def assign_slots():
     if request.method == "POST":
+        college_class = request.form.get("class")
+        division = request.form.get("division")
+        subject = request.form.get("subject")
+        room = request.form.get("room")
+        faculty = request.form.get("faculty")
+        mult_faculty = request.form.get("multiple-faculty")
+        batch = request.form.get("batch")
+        slots = request.form.get("slots")
+        assign_para = ( college_class, subject, )
         return redirect("/assign_slots")
     else:
         return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM)
@@ -285,14 +294,6 @@ def assign_slots():
 @login_required
 def show_timetable():
     if request.method == "POST":
-        college_class = request.form.get("class")
-        division = request.form.get("division")
-        subject = request.form.get("subject")
-        room = request.form.get("room")
-        faculty = request.form.get("faculty")
-        mult_faculty = request.form.get("multiple-faculty")
-        batch = request.form.get("batch")
-        slots = request.form.get("slots")
         return render_template("show_timetable.html")
     else:
         return render_template("show_timetable.html")
