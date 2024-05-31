@@ -27,15 +27,7 @@
                         <label>Department</label>
                         <select name="department" class="form-select" aria-label="Default select example">
                             <option selected disabled>Open this select menu</option>
-                            <option value="COMP">COMP</option>
-                            <option value="IT">IT</option>
-                            <option value="ETRX">ETRX</option>
-                            <option value="EXTC">EXTC</option>
-                            <option value="MECH">MECH</option>
-                            <option value="EXCP">EXCP</option>
-                            <option value="SAH">SAH</option>
-                            <option value="AIDS">AIDS</option>
-                            <option value="CCE">CCE</option>
+                            <option value="{{ g.CURR_USER }}">{{ g.CURR_USER }}</option>
                         </select>
                         <label>Batch</label>
                         <select name="batch" class="form-select" aria-label="Default select example">

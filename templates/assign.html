@@ -6,7 +6,8 @@
 <div class="container">
     <div class="form-container">
         <h2>Assign Theory Slots</h2>
-        <form id="slot-form">
+        <h2>{{ CURR_YEAR_SEM }}</h2>
+        <form action="/assign_slots" id="slot-form" method="POST">
             <label for="class">Class</label>
             <select id="class" name="class">
                 <!-- Example Class options -->
@@ -57,8 +58,8 @@
             </select>
 
             <div class="form-buttons">
-                <button type="submit" class="btn assign-theory">Assign Theory</button>
-                <button type="submit" class="btn assign-practical">Assign Practical</button>
+                <button type="submit" class="btn assign-theory" name="submit-button" value="L">Assign Theory</button>
+                <button type="submit" class="btn assign-practical" name="submit-button" value="P">Assign Practical</button>
             </div>
         </form>
     </div>

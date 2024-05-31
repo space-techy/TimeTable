@@ -37,7 +37,13 @@ cursor = conn.cursor()
 
 
 #This variable is created globally so that it can keep track of which timetable we are currently in
-curr_year_sem = ""
+CURR_YEAR_SEM = ""
+
+
+@app.before_request
+def load_user():
+    g.CURR_USER = session.get("username")
+
 
 #This is for users to log in
 @app.route("/login", methods=["GET","POST"], endpoint = "login")
@@ -54,6 +60,7 @@ def login_page():
         if(result):
             user_log = User(result)
             login_user(user_log)
+            session["username"] = username
             session.permanent = True
             app.permanent_session_lifetime = timedelta(minutes=30)
             return redirect("/")
@@ -81,6 +88,7 @@ def register_page():
         cursor.execute(user_id_reg,(username,))
         cur_res = (cursor.fetchall())[0][0]
         user_res = User(cur_res)
+        session["username"] = username
         login_user(user_res)
         conn.commit()
         return redirect("/")
@@ -110,13 +118,12 @@ def reg_red():
 @login_required
 def home():
     if request.method == "POST":
-        return render_template("main_body.html")
-
+        return render_template("main_body.html", sems_table = sems_table)
     else:
         cursor.execute("SELECT year,sem FROM all_timetables")
         sems_table = cursor.fetchall()
         print(sems_table)
-        return render_template("main_body.html",sems_table = sems_table)
+        return render_template("main_body.html", sems_table = sems_table)
 
 
 
@@ -127,8 +134,8 @@ def create_timetable():
         year = request.form.get("year_session")
         sem = request.form.get("sem").lower()
         sem_year = sem + "_" + year
-        global curr_year_sem 
-        curr_year_sem = sem_year
+        global CURR_YEAR_SEM 
+        CURR_YEAR_SEM = sem_year
         insert_query = "INSERT INTO all_timetables( year, sem, year_sem) VALUES ( %s, %s, %s)"
         create_query = f"""CREATE TABLE {sem_year}(
             id SERIAL,
@@ -268,9 +275,9 @@ def add_div():
 @login_required
 def assign_slots():
     if request.method == "POST":
-        return render_template("assign.html")
+        return redirect("/assign_slots")
     else:
-        return render_template("assign.html")
+        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM)
     
 
 
@@ -278,6 +285,14 @@ def assign_slots():
 @login_required
 def show_timetable():
     if request.method == "POST":
+        college_class = request.form.get("class")
+        division = request.form.get("division")
+        subject = request.form.get("subject")
+        room = request.form.get("room")
+        faculty = request.form.get("faculty")
+        mult_faculty = request.form.get("multiple-faculty")
+        batch = request.form.get("batch")
+        slots = request.form.get("slots")
         return render_template("show_timetable.html")
     else:
         return render_template("show_timetable.html")
