@@ -58,9 +58,9 @@ def login_page():
         user_info = (username,password)
         user_login = "SELECT user_id,username,user_password FROM users WHERE username = %s AND user_password = %s"
         cursor.execute(user_login,user_info)
-        result = cursor.fetchall()[0][0]
-        if(result):
-            user_log = User(result)
+        result = cursor.fetchall()
+        if(len(result) > 0):
+            user_log = User(result[0][1])
             login_user(user_log)
             session["username"] = username
             session.permanent = True
@@ -308,8 +308,76 @@ def assign_slots():
         type_submit = request.form.get("submit-button")
         if(len(mult_faculty) > 0):
             faculty = faculty.strip() + "/" + mult_faculty.strip()
+            fac_list = []
+            fac_index = 0
+            for j in range(len(faculty)):
+                if(faculty[j] == "/"):
+                    fac_list.append(faculty[fac_index:j])
+                    fac_index = j + 1
+            fac_list.append(faculty[fac_index:])
+            if(len(slots) > 1):
+                for curr_fac in fac_list:
+                    for slot in slots:
+                        fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND ((faculty  LIKE  %s) OR (faculty  LIKE  %s) OR (faculty  LIKE  %s))"
+                        fac_para = (slots[0],f"%/{curr_fac}/%",f"%{curr_fac}/%",f"%/{curr_fac}%")
+                        cursor.execute(fac_query,fac_para)
+                        fac_res = cursor.fetchall()
+                        if(len(fac_res >= 1)):
+                            query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
+                            cursor.execute(query)
+                            results = cursor.fetchall()
+                            return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Faculty is already alloted for that slot!")
+            else:
+                for curr_fac in fac_list:
+                    fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND ((faculty  LIKE  %s) OR (faculty  LIKE  %s) OR (faculty  LIKE  %s))"
+                    fac_para = (slots[0],f"%/{curr_fac}/%",f"%{curr_fac}/%",f"%/{curr_fac}%")
+                    cursor.execute(fac_query,fac_para)
+                    fac_res = cursor.fetchall()
+                    if(len(fac_res) >= 1):
+                        query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
+                        cursor.execute(query)
+                        results = cursor.fetchall()
+                        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Faculty is already alloted for that slot!")
+        else:
+            if(len(slots) > 1):
+                for slot in slots:
+                    fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND  faculty = %s"
+                    fac_para = (slot,faculty)
+                    cursor.execute(fac_query,fac_para)
+                    fac_res = cursor.fetchall()
+                    if(len(fac_res >= 1)):
+                        query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
+                        cursor.execute(query)
+                        results = cursor.fetchall()
+                        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Faculty is already alloted for that slot!")
+            else:
+                fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND  faculty = %s"
+                fac_para = (slots[0],faculty)
+                cursor.execute(fac_query,fac_para)
+                fac_res = cursor.fetchall()
+                if(len(fac_res) >= 1):
+                    query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
+                    cursor.execute(query)
+                    results = cursor.fetchall()
+                    return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Faculty is already alloted for that slot!")
         if(len(slots) > 1):
             for slot in slots:
+                room_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE room = %s AND slot = %s"
+                room_para = (room,slot)
+                cursor.execute(room_query,room_para)
+                room_res = cursor.fetchall()
+                batch_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND batch = %s AND division = %s AND class = %s"
+                batch_para = (slot,batch,division,college_class)
+                cursor.execute(batch_query, batch_para)
+                batch_res = cursor.fetchall()
+                if((len(batch_res) >= 1) or (len(room_res) >= 1)):
+                    query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
+                    cursor.execute(query)
+                    results = cursor.fetchall()
+                    if(len(room_res) >= 1):
+                        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Room is already alloted for that slot!")
+                    elif(len(batch_res) >= 1):
+                        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Batch of that Division is already alloted for that slot!")
                 search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
                 cursor.execute(search_query, (slot,))
                 time_slots = cursor.fetchall()[0]
@@ -325,6 +393,22 @@ def assign_slots():
                 conn.commit()
             return redirect("/assign_slots")
         else:
+            room_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE room = %s AND slot = %s"
+            room_para = (room,slots[0])
+            cursor.execute(room_query,room_para)
+            room_res = cursor.fetchall()
+            batch_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND batch = %s AND division = %s AND class = %s"
+            batch_para = (slots[0],batch,division,college_class)
+            cursor.execute(batch_query, batch_para)
+            batch_res = cursor.fetchall()
+            if((len(batch_res) >= 1) or (len(room_res) >= 1)):
+                query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
+                cursor.execute(query)
+                results = cursor.fetchall()
+                if(len(room_res) >= 1):
+                    return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Room is already alloted for that slot!")
+                elif(len(batch_res) >= 1):
+                    return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Batch of that Division is already alloted for that slot!")
             search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
             cursor.execute(search_query, (slots[0],))
             time_slots = cursor.fetchall()[0]
@@ -334,7 +418,7 @@ def assign_slots():
                 type_sub = "E".strip() + type_submit.strip()
             else:
                 type_sub = type_submit
-            insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
+            insert_para = (college_class,subject,slots[0],time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
             insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
             cursor.execute(insert_query,insert_para)
             conn.commit()
@@ -351,9 +435,11 @@ def assign_slots():
 @login_required
 def show_timetable():
     if request.method == "POST":
-        return render_template("show_timetable.html")
+        roomno = request.form.get("")
+
+        return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM)
     else:
-        return render_template("show_timetable.html")
+        return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM)
     
 
 

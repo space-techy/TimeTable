@@ -1,7 +1,6 @@
 {% extends "showtime_nav.html" %}
 
 {% block timeshow %}
-    
     <div class="timetable-container">
         <header>
             <h1>K. J. Somaiya College of Engineering</h1>
@@ -10,9 +9,15 @@
         </header>
         <section class="class-info">
             <strong>CLASS: SY M.Tech. ADMIN</strong><br>
-            <strong>ACADEMIC YEAR: 2023-2024 SEMESTER: EVEN</strong>
+            <strong>ACADEMIC YEAR:  {{ CURR_YEAR_SEM[-9:-5] }}-{{ CURR_YEAR_SEM[-4:] }} SEMESTER: 
+            {% if CURR_YEAR_SEM[0].upper() == "E" %}
+                EVEN
+            {% else %}
+                ODD
+            {% endif %}
+            </strong>
         </section>
-        <table class="timetable">
+        {# <table class="timetable">
             <thead>
                 <tr>
                     <th>Time/Day</th>
@@ -25,17 +30,25 @@
             </thead>
             <tbody>
                 <!-- Rows for each hour -->
-                <tr><td>7:00-8:00</td><td></td><td></td><td></td><td></td><td></td></tr>
                 <!-- More rows corresponding to each hour -->
+                <tr><td>8:00-9:00</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>9:00-10:00</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>10:00-11:00</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>11:00-12:00</td><td rowspan="2"></td><td></td><td></td><td></td><td></td></tr>
                 <!-- ... -->
-                <tr><td>12:00-1:00</td><td colspan="5">Lunch Break</td></tr>
+                <tr><td>12:00-1:00</td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>1:00-2:00</td><td colspan="5">Lunch Break</td></tr>
+                <tr><td>2:00-3:00</td><td></td><td></td><td></td><td></td><td></td></tr>
                 <!-- ... -->
+                <tr><td>3:00-4:00</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>4:00-5:00</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>5:00-6:00</td><td></td><td></td><td></td><td></td><td></td></tr>
                 <tr><td>6:00-7:00</td><td></td><td></td><td></td><td></td><td></td></tr>
             </tbody>
             <tfoot>
                 <tr><td>H.O.D</td><td colspan="4"></td><td>PRINCIPAL</td></tr>
             </tfoot>
-        </table>
+        </table> #}
     </div>
 
 {% endblock timeshow %}

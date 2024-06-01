@@ -88,6 +88,10 @@ WHERE slots_name = slots;
 SELECT subelective FROM subjects WHERE subabb = subject;
 
 
+-- This search query is for searching faculty with slot available
+SELECT * FROM "CURRENT_TIMETABLE" WHERE slot = slot AND faculty = faculty;
+
+
 
 -- This query is to check whether or not there are already any subjects and room and faculty available
 

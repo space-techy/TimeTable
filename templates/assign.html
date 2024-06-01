@@ -2,12 +2,11 @@
 
 
 {% block content %}
-
 <div class="container">
     <div class="form-container">
         <p>{{ error }}</p>
         <h2>Assign Theory Slots</h2>
-        <h2>{{ CURR_YEAR_SEM }}</h2>
+        <h2>{{ CURR_YEAR_SEM.upper() }}</h2>
         <form action="/assign_slots" id="slot-form" method="POST">
             <label for="class">Class</label>
             <select id="class" name="class">
@@ -22,6 +21,7 @@
                 <!-- Example Division options -->
                 <option value="divisionA">A</option>
                 <option value="divisionB">B</option>
+                <option value="divisionC">C</option>
                 <!-- Add other division options here -->
             </select>
 
@@ -30,6 +30,8 @@
                 <!-- Example Subject options -->
                 <option value="subject1">Mathematics</option>
                 <option value="subject2">Physics</option>
+                <option value="ITVC">ITVC</option>
+                <option value="AOA">AOA</option>
                 <!-- Add other subject options here -->
             </select>
 
