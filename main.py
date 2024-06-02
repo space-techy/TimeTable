@@ -389,9 +389,15 @@ def assign_slots():
                     type_sub = type_submit
                 insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
                 insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
+            try:
                 cursor.execute(insert_query,insert_para)
                 conn.commit()
-            return redirect("/assign_slots")
+                return redirect("/assign_slots")
+            except mysql.errors as error:
+                query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
+                cursor.execute(query)
+                results = cursor.fetchall()
+                return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results, error = error)
         else:
             room_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE room = %s AND slot = %s"
             room_para = (room,slots[0])
@@ -420,9 +426,15 @@ def assign_slots():
                 type_sub = type_submit
             insert_para = (college_class,subject,slots[0],time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
             insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
-            cursor.execute(insert_query,insert_para)
-            conn.commit()
-            return redirect("/assign_slots")
+            try:
+                cursor.execute(insert_query,insert_para)
+                conn.commit()
+                return redirect("/assign_slots")
+            except mysql.errors as error:
+                query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
+                cursor.execute(query)
+                results = cursor.fetchall()
+                return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results, error = error)
     else:
         query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
         cursor.execute(query)

@@ -83,5 +83,6 @@ CREATE TABLE divisions(
     course VARCHAR(100) NOT NULL,
     department VARCHAR(100) NOT NULL,
     batch VARCHAR(10) NOT NULL,
-    no_of_div INT(10) NOT NULL
+    no_of_div INT(10) NOT NULL,
+    class VARCHAR(500) NOT NULL
 );
