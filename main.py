@@ -435,8 +435,102 @@ def assign_slots():
 @login_required
 def show_timetable():
     if request.method == "POST":
-        roomno = request.form.get("")
+        sel_class = request.form.get("sel_class")
+        sel_room = request.form.get("sel_room")
+        sel_fac = request.form.get("sel_fac")
+        if(sel_class):
+            course_year = sel_class[0:2]
+            course_batch = sel_class[-1]
+            course = sel_class[3:10]
+            course_department = CURR_BRANCH
+            div_para = (course_year, course,course_department,course_batch)
+            div_query = "SELECT no_of_div FROM divisions WHERE year = %s AND course = %s AND department = %s AND batch = %s"
+            cursor.execute(div_query, div_para)
+            div_res = cursor.fetchall()
+            no_of_div = div_res[0][0]
+            time_slots = ["8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
+            days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+            # Now we are working on the part of adding colspan for days
+            day_colspan = {}
+            total_columns = 0
+            for day in days:
+                day_query = f"SELECT batch FROM {CURR_YEAR_SEM} WHERE division = %s AND branch = %s AND day = %s AND batch != 'NO'"
+                day_para = ( course_batch, course_department, day)
+                cursor.execute( day_query, day_para)
+                day_res = cursor.fetchall()
+                if(len(day_res) > 0 ):
+                    day_colspan[day] = no_of_div
+                    total_columns = total_columns + no_of_div
+                else:
+                    day_colspan[day] = 1
+                    total_columns = total_columns + 1
+            
+            # This code is for creating html table head with colspan
+            table_head = "<thead><tr><th>Time/Day</th>"
+            for day in days:
+                if(day_colspan[day] > 1):
+                    table_head = table_head + f"<th colspan={day_colspan[day]}>{day}<th>"
+                else:
+                    table_head = table_head + f"<th colspan={day_colspan[day]}>{day}<th>"
+            table_head  = table_head + "</tr></thead>"
 
+            # Now we are going to create the body of the table
+            check_back_row = {}
+            table_body = "<tbody>"
+            for t in range(len(time_slots)):
+                table_body = table_body + f"<tr><td>{time_slots[t]}</td>"
+                if(time_slots[t] == "1:00-2:00"):
+                    table_body = table_body + f"<td colspan={total_columns}>LUNCH BREAK</td>"
+                    continue
+                for day in days:
+                    if(check_back_row[time_slots[t]] == day):
+                        continue
+                    curr_time_para = (day,time_slots[t],course_department, course_batch)
+                    next_time_para = (day,time_slots[t + 1],course_department, course_batch)
+                    time_query = f"SELECT class,subject,day,faculty,room,type,branch,batch,division FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
+                    cursor.execute(time_query, curr_time_para)
+                    curr_time_res = cursor.fetchall()
+                    cursor.execute(time_query, next_time_para )
+                    next_time_res = cursor.fetchall()
+                    curr_time_res = sorted(curr_time_res)
+                    next_time_res = sorted(next_time_res)
+                    rowspan_or_not = False
+                    if(curr_time_res == next_time_res):
+                        check_back_row[time_slots[t + 1]] = day
+                        rowspan_or_not = True
+                    data_query = f"SELECT subject,room,faculty,division,batch FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
+                    cursor.execute(data_query, curr_time_para)
+                    data_res = cursor.fetchall()
+                    if(len(data_res) == 0):
+                        if(rowspan_or_not):
+                            table_body = table_body + "<td rowspan=2></td>"
+                        else:
+                            table_body = table_body + "<td rowspan=1></td>"
+                    if(len(data_res) > 1):
+                        for curr_batch in data_res:
+                            if(rowspan_or_not):
+                                table_body = table_body + f"""<td rowspan=2 colspan=1>{ curr_batch[0] } 
+                                {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[4] }</td>"""
+                            else:
+                                table_body = table_body + f"""<td rowspan=1 colspan=1>{ curr_batch[0] } 
+                                {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[4] }</td>"""
+                    else:
+                        if(rowspan_or_not):
+                            table_body = table_body + f"""<td rowspan=2 colspan={ no_of_div }>{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }</td>"""
+                        else:
+                            table_body = table_body + f"""<td rowspan=1 colspan={ no_of_div }>{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }</td>"""
+                table_body = table_body + "</tr>"
+            table_body = table_body + "</tbody>"
+            space_hod = total_columns - 2
+            table_foot = f"""<tfoot>
+                <tr><td>H.O.D</td><td colspan={space_hod}></td><td>PRINCIPAL</td></tr>
+            </tfoot>"""
+            complete_table = table_head + table_body + table_foot
+            return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, timetable = complete_table)
+        elif(sel_room):
+            print("In sel room")
+        elif(sel_fac):
+            print("In sel_fac")
         return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM)
     else:
         return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM)
