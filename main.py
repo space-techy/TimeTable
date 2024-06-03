@@ -124,7 +124,6 @@ def home():
     else:
         cursor.execute("SELECT id,year,sem FROM all_timetables")
         sems_table = cursor.fetchall()
-        print(sems_table)
         return render_template("main_body.html", sems_table = sems_table)
 
 
@@ -153,16 +152,15 @@ def create_timetable():
             branch VARCHAR(250) NOT NULL,
             division VARCHAR(250) NOT NULL
         )"""
-        print(create_query)
         try:
             cursor.execute(insert_query, ( year, sem.upper(), sem_year))
             cursor.execute(create_query)
             conn.commit()
             return redirect("/assign_slots")
-        except mysql.Error as error:
+        except:
             conn.rollback()
-            print("MySQL Error: ", error)
-            return render_template("main_body.html")
+            error = "TimeTable Already Exists!"
+            return render_template("main_body.html",error = error)
     else:
         return render_template("main_body.html")
 
@@ -203,15 +201,20 @@ def add_subject():
         subQuery = "INSERT INTO subjects( subclass, subsem, subcode, subabb, subname, sublecture, subtut, subprac, subelective) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
         try:
             cursor.execute(subQuery, subInfo)
+            conn.commit()
             return redirect("/add_subjects")
         except:
+            cursor.execute("SELECT DISTINCT(class) FROM divisions WHERE department = %s", (CURR_BRANCH,))
+            class_sub = cursor.fetchall()
             cursor.execute("SELECT * FROM subjects")
             subjects = cursor.fetchall()
-            return render_template("add_subjects.html", error = "Faculty Already Exists or Given Data is wrong!", subjects = subjects)
+            return render_template("add_subjects.html", class_sub = class_sub,error = "Subjects Already Exists or Given Data is wrong!", subjects = subjects)
     else:
+        cursor.execute("SELECT DISTINCT(class) FROM divisions WHERE department = %s", (CURR_BRANCH,))
+        class_sub = cursor.fetchall()
         cursor.execute("SELECT * FROM subjects")
         subjects = cursor.fetchall()
-        return render_template("add_subjects.html",subjects = subjects)
+        return render_template("add_subjects.html",class_sub = class_sub,subjects = subjects)
 
 
 @app.route("/add_faculty", methods=["GET", "POST"])
@@ -223,18 +226,21 @@ def add_faculty():
         facdes = request.form.get("faculty_designation")
         facqual = request.form.get("faculty_qualification")
         facshdep = request.form.get("shared_dep")
-        facInfo = ( facinit, facname, facdes, facqual, facshdep)
-        facQuery = "INSERT INTO faculty( facinit, facname, facdes, facqual, facshdep) VALUES(%s,%s,%s,%s,%s)"
+        facdep = CURR_BRANCH
+        facInfo = ( facinit, facname, facdes, facqual, facdep,facshdep)
+        facQuery = "INSERT INTO faculty( facinit, facname, facdes, facqual, facdep,facshdep) VALUES(%s,%s,%s,%s,%s,%s)"
         try:
             cursor.execute(facQuery, facInfo)
             conn.commit()
             return redirect("/add_faculty")
         except:
-            cursor.execute("SELECT * FROM faculty")
+            fac_query = f"SELECT * FROM faculty WHERE facdep = '{CURR_BRANCH}' OR facshdep = '{CURR_BRANCH}'"
+            cursor.execute(fac_query)
             faculties = cursor.fetchall()
             return render_template("add_faculty.html", error = "Faculty Already Exists or Input Given was Invalid!" ,faculties = faculties)
     else:
-        cursor.execute("SELECT * FROM faculty")
+        fac_query = f"SELECT * FROM faculty WHERE facdep = '{CURR_BRANCH}' OR facshdep = '{CURR_BRANCH}'"
+        cursor.execute(fac_query)
         faculties = cursor.fetchall()
         return render_template("add_faculty.html", faculties = faculties)
     
@@ -247,18 +253,21 @@ def add_room():
         roomno = request.form.get("room_no")
         roomdesc = request.form.get("room_desc")
         roomshdp = request.form.get("shared_dep")
-        roomInfo = ( roomno, roomdesc, roomshdp)
-        roomQuery = "INSERT INTO rooms( roomno, roomdes, roomshdep) VALUES(%s,%s,%s)"
+        roomdep = CURR_BRANCH
+        roomInfo = ( roomno, roomdesc, roomdep, roomshdp)
+        roomQuery = "INSERT INTO rooms( roomno, roomdes, roomdep, roomshdep) VALUES(%s,%s,%s,%s)"
         try:
             cursor.execute( roomQuery, roomInfo)
             conn.commit()
             return redirect("/add_room")
-        except mysql.errors as error:
-            cursor.execute("SELECT * FROM rooms")
+        except:
+            room_query = f"SELECT * FROM rooms WHERE roomdep = '{CURR_BRANCH}' OR roomshdep = '{CURR_BRANCH}'"
+            cursor.execute(room_query)
             rooms = cursor.fetchall()
-            return render_template("add_room.html", error = error , rooms = rooms)
+            return render_template("add_room.html", error = "Room Already Exists! Or Incorrect Data!" , rooms = rooms)
     else:
-        cursor.execute("SELECT * FROM rooms")
+        room_query = f"SELECT * FROM rooms WHERE roomdep = '{CURR_BRANCH}' OR roomshdep = '{CURR_BRANCH}'"
+        cursor.execute(room_query)
         rooms = cursor.fetchall()
         return render_template("add_room.html", rooms = rooms)
     
@@ -272,8 +281,9 @@ def add_div():
         department = request.form.get("department")
         batch = request.form.get("batch")
         divisions = request.form.get("no_div")
-        div_para = (year, course, department, batch, divisions)
-        div_insert = "INSERT INTO divisions( year, course, department, batch, no_of_div) VALUES( %s, %s, %s, %s, %s)"
+        class_coll = year + " " + course+ " " + department
+        div_para = (year, course, department, batch, divisions,class_coll)
+        div_insert = "INSERT INTO divisions( year, course, department, batch, no_of_div,class) VALUES( %s, %s, %s, %s, %s,%s)"
         try:
             cursor.execute(div_insert, div_para)
             conn.commit()
@@ -285,8 +295,45 @@ def add_div():
     else:
         cursor.execute("SELECT * FROM divisions")
         div_table = cursor.fetchall()
-        print(div_table)
         return render_template("add_div.html", div_table = div_table)
+
+
+
+
+@app.route("/get_div", methods = [ "GET", "POST"])
+def get_div():
+    if request.method == "POST":
+        sel_class = request.get_json()
+        sel_class = sel_class["sel_class"]
+        sub_query = f"SELECT subabb FROM subjects WHERE subclass = %s AND subsem = %s"
+        div_query = f"SELECT batch,no_of_div FROM divisions WHERE class = %s"
+        room_query = f"SELECT roomno FROM rooms WHERE roomdep = %s OR roomshdep = %s"
+        faculty_query = f"SELECT facinit FROM faculty WHERE facdep = %s OR facshdep = %s"
+        if(CURR_YEAR_SEM[0] == "O"):
+            subsem = "ODD"
+        else:
+            subsem = "EVEN"
+        sub_para = (sel_class, subsem)
+        div_para = (sel_class,)
+        room_fac_para = (CURR_BRANCH,CURR_BRANCH)
+        cursor.execute(sub_query,sub_para)
+        sub_res = cursor.fetchall()
+        cursor.execute(div_query,div_para)
+        div_res = cursor.fetchall()
+        cursor.execute(room_query,room_fac_para)
+        room_res = cursor.fetchall()
+        cursor.execute(faculty_query,room_fac_para)
+        faculty_res = cursor.fetchall()
+
+        # This is to send back the data
+        send_results = {
+            "subjects" : sub_res,
+            "divisions" : div_res,
+            "rooms" : room_res,
+            "faculty" : faculty_res
+        }
+        return jsonify(send_results)
+
 
 
     
@@ -296,6 +343,7 @@ def add_div():
 def assign_slots():
     global CURR_BRANCH
     global CURR_YEAR_SEM
+    errorin = ""
     if request.method == "POST":
         college_class = request.form.get("class")
         division = request.form.get("division")
@@ -327,6 +375,23 @@ def assign_slots():
                             cursor.execute(query)
                             results = cursor.fetchall()
                             return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Faculty is already alloted for that slot!")
+                        search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+                        cursor.execute(search_query, (slot,))
+                        time_slots = cursor.fetchall()[0]
+                        cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
+                        subelective = cursor.fetchall()
+                        if(subelective == "YES"):
+                            type_sub = "E".strip() + type_submit.strip()
+                        else:
+                            type_sub = type_submit
+                        insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],curr_fac,room, batch, type_sub, CURR_BRANCH,division)
+                        insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
+                        try:
+                            cursor.execute(insert_query,insert_para)
+                            conn.commit()
+                        except:
+                            errorin = "Some problem Arised please check the fields again while submitting!"
+                            return redirect("/assign_slots")
             else:
                 for curr_fac in fac_list:
                     fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND ((faculty  LIKE  %s) OR (faculty  LIKE  %s) OR (faculty  LIKE  %s))"
@@ -338,6 +403,23 @@ def assign_slots():
                         cursor.execute(query)
                         results = cursor.fetchall()
                         return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Faculty is already alloted for that slot!")
+                    search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+                    cursor.execute(search_query, (slots,))
+                    time_slots = cursor.fetchall()[0]
+                    cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
+                    subelective = cursor.fetchall()
+                    if(subelective == "YES"):
+                        type_sub = "E".strip() + type_submit.strip()
+                    else:
+                        type_sub = type_submit
+                    insert_para = (college_class,subject,slots,time_slots[0],time_slots[1],curr_fac,room, batch, type_sub, CURR_BRANCH,division)
+                    insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
+                    try:
+                        cursor.execute(insert_query,insert_para)
+                        conn.commit()
+                    except:
+                        errorin = "Some problem Arised please check the fields again while submitting!"
+                        return redirect("/assign_slots")
         else:
             if(len(slots) > 1):
                 for slot in slots:
@@ -345,11 +427,28 @@ def assign_slots():
                     fac_para = (slot,faculty)
                     cursor.execute(fac_query,fac_para)
                     fac_res = cursor.fetchall()
-                    if(len(fac_res >= 1)):
+                    if(len(fac_res) >= 1):
                         query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
                         cursor.execute(query)
                         results = cursor.fetchall()
                         return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Faculty is already alloted for that slot!")
+                    search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+                    cursor.execute(search_query, (slot,))
+                    time_slots = cursor.fetchall()[0]
+                    cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
+                    subelective = cursor.fetchall()
+                    if(subelective == "YES"):
+                        type_sub = "E".strip() + type_submit.strip()
+                    else:
+                        type_sub = type_submit
+                    insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
+                    insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
+                    try:
+                        cursor.execute(insert_query,insert_para)
+                        conn.commit()
+                    except:
+                        errorin = "Some problem Arised please check the fields again while submitting!"
+                        return redirect("/assign_slots")
             else:
                 fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND  faculty = %s"
                 fac_para = (slots[0],faculty)
@@ -360,6 +459,25 @@ def assign_slots():
                     cursor.execute(query)
                     results = cursor.fetchall()
                     return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Faculty is already alloted for that slot!")
+                search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+                cursor.execute(search_query, (slots[0],))
+                time_slots = cursor.fetchall()[0]
+                cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
+                subelective = cursor.fetchall()
+                if(subelective == "YES"):
+                    type_sub = "E".strip() + type_submit.strip()
+                else:
+                    type_sub = type_submit
+                insert_para = (college_class,subject,slots[0],time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
+                insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
+                try:
+                    cursor.execute(insert_query,insert_para)
+                    conn.commit()
+                    return redirect("/assign_slots")
+                except:
+                    errorin = "Some problem Arised please check the fields again while submitting!"
+                    return redirect("/assign_slots")
+            return redirect("/assign_slots")
         if(len(slots) > 1):
             for slot in slots:
                 room_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE room = %s AND slot = %s"
@@ -389,15 +507,13 @@ def assign_slots():
                     type_sub = type_submit
                 insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
                 insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
-            try:
-                cursor.execute(insert_query,insert_para)
-                conn.commit()
-                return redirect("/assign_slots")
-            except mysql.errors as error:
-                query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
-                cursor.execute(query)
-                results = cursor.fetchall()
-                return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results, error = error)
+                try:
+                    cursor.execute(insert_query,insert_para)
+                    conn.commit()
+                    return redirect("/assign_slots")
+                except:
+                    errorin = "Some problem Arised please check the fields again while submitting!"
+                    return redirect("/assign_slots")
         else:
             room_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE room = %s AND slot = %s"
             room_para = (room,slots[0])
@@ -430,16 +546,21 @@ def assign_slots():
                 cursor.execute(insert_query,insert_para)
                 conn.commit()
                 return redirect("/assign_slots")
-            except mysql.errors as error:
-                query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
-                cursor.execute(query)
-                results = cursor.fetchall()
-                return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results, error = error)
+            except:
+                errorin = "Some Problem has arised please check input fields  or data again!"
+                return redirect("/assign.html")
     else:
+        input_class_query = "SELECT DISTINCT(class) FROM divisions WHERE department = %s"
+        input_class_para = ( CURR_BRANCH, )
+        slots_para = "SELECT slots_name,slot_time_day FROM time_slots"
+        cursor.execute(slots_para)
+        slots_res = cursor.fetchall()
+        cursor.execute(input_class_query, input_class_para)
+        input_class_res = cursor.fetchall()
         query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
         cursor.execute(query)
         results = cursor.fetchall()
-        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results)
+        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,slots_res = slots_res, input_class_res = input_class_res,error = errorin)
     
 
 
@@ -481,59 +602,69 @@ def show_timetable():
             table_head = "<thead><tr><th>Time/Day</th>"
             for day in days:
                 if(day_colspan[day] > 1):
-                    table_head = table_head + f"<th colspan={day_colspan[day]}>{day}<th>"
+                    table_head = table_head + f"<th colspan={day_colspan[day]}>{day}</th>"
                 else:
-                    table_head = table_head + f"<th colspan={day_colspan[day]}>{day}<th>"
+                    table_head = table_head + f"<th colspan={day_colspan[day]}>{day}</th>"
             table_head  = table_head + "</tr></thead>"
-
             # Now we are going to create the body of the table
             check_back_row = {}
             table_body = "<tbody>"
             for t in range(len(time_slots)):
                 table_body = table_body + f"<tr><td>{time_slots[t]}</td>"
                 if(time_slots[t] == "1:00-2:00"):
-                    table_body = table_body + f"<td colspan={total_columns}>LUNCH BREAK</td>"
+                    table_body = table_body + f'<td colspan={total_columns} style="text-align: center;">LUNCH BREAK</td>'
                     continue
                 for day in days:
-                    if(check_back_row[time_slots[t]] == day):
-                        continue
-                    curr_time_para = (day,time_slots[t],course_department, course_batch)
-                    next_time_para = (day,time_slots[t + 1],course_department, course_batch)
+                    if(time_slots[t] in check_back_row.keys()):
+                        if(day in check_back_row[time_slots[t]]):
+                            continue
                     time_query = f"SELECT class,subject,day,faculty,room,type,branch,batch,division FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
+                    curr_time_para = (day,time_slots[t],course_department, course_batch)
                     cursor.execute(time_query, curr_time_para)
                     curr_time_res = cursor.fetchall()
-                    cursor.execute(time_query, next_time_para )
-                    next_time_res = cursor.fetchall()
                     curr_time_res = sorted(curr_time_res)
-                    next_time_res = sorted(next_time_res)
+                    if((t+1) != len(time_slots)):
+                        next_time_para = (day,time_slots[t + 1],course_department, course_batch)
+                        cursor.execute(time_query, next_time_para )
+                        next_time_res = cursor.fetchall()
+                        next_time_res = sorted(next_time_res)
                     rowspan_or_not = False
-                    if(curr_time_res == next_time_res):
-                        check_back_row[time_slots[t + 1]] = day
-                        rowspan_or_not = True
+                    if(next_time_res):
+                        if(curr_time_res == next_time_res):
+                            if(time_slots[t+1] in check_back_row.keys()):
+                                add_day =  check_back_row[time_slots[t + 1]]
+                                add_day.append(day)
+                                check_back_row[time_slots[t + 1]] = add_day
+                                rowspan_or_not = True
+                            else:
+                                check_back_row[time_slots[t + 1]] = [day]
+                                rowspan_or_not = True
                     data_query = f"SELECT subject,room,faculty,division,batch FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
                     cursor.execute(data_query, curr_time_para)
                     data_res = cursor.fetchall()
                     if(len(data_res) == 0):
-                        if(rowspan_or_not):
-                            table_body = table_body + "<td rowspan=2></td>"
-                        else:
-                            table_body = table_body + "<td rowspan=1></td>"
+                        table_body = table_body + f"<td colspan = {day_colspan[day]}></td>"
+                        continue
                     if(len(data_res) > 1):
                         for curr_batch in data_res:
                             if(rowspan_or_not):
-                                table_body = table_body + f"""<td rowspan=2 colspan=1>{ curr_batch[0] } 
-                                {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[4] }</td>"""
+                                td = f'<td rowspan=2 colspan=1>{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[4] }</td>'
+                                table_body = table_body + td
                             else:
-                                table_body = table_body + f"""<td rowspan=1 colspan=1>{ curr_batch[0] } 
-                                {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[4] }</td>"""
+                                td = f'<td rowspan=1 colspan=1>{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[4] }</td>'
+                                table_body = table_body + td
                     else:
+                        curr_batch = data_res[0]
                         if(rowspan_or_not):
-                            table_body = table_body + f"""<td rowspan=2 colspan={ no_of_div }>{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }</td>"""
+                            td = f'<td rowspan=2 colspan={ no_of_div }>{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }</td>'
+                            table_body = table_body + td
                         else:
-                            table_body = table_body + f"""<td rowspan=1 colspan={ no_of_div }>{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }</td>"""
+                            td = f'<td rowspan=1 colspan={ no_of_div }>{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }</td>'
+                            table_body = table_body + td
+                    next_time_res = False
                 table_body = table_body + "</tr>"
             table_body = table_body + "</tbody>"
-            space_hod = total_columns - 2
+            space_hod = total_columns - 1
             table_foot = f"""<tfoot>
                 <tr><td>H.O.D</td><td colspan={space_hod}></td><td>PRINCIPAL</td></tr>
             </tfoot>"""

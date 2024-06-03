@@ -59,7 +59,7 @@
                         </tr>
                         {% for row in div_table  %}
                             <tr>
-                                {% for col in row[1:] %}
+                                {% for col in row[1:-1] %}
                                     <td>{{ col }}</td>
                                 {% endfor %}
                                 <td>delete</td>

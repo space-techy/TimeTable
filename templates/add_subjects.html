@@ -15,13 +15,16 @@
                     <form action="/add_subjects" method="POST">
                         <label>Class</label>
                         <select name="class_sub" class="form-select" aria-label="Default select example">
-                            <option value="SY B.Tech. COMP">SY Btech COMP</option>
-                            <option value="TY B.Tech. COMP">TY Btech COMP</option>
+                            <option selected disabled>Select</option>
+                            {% for cl in class_sub %}
+                                <option value="{{ cl[0] }}"> {{ cl[0] }}</option>
+                            {% endfor %}
                         </select>
                         <label>Semester</label>
                         <select  name="sem" class="form-select" aria-label="Default select example">
-                            <option value="odd">ODD</option>
-                            <option value="even">EVEN</option>
+                            <option selected disabled>Select</option>
+                            <option value="ODD">ODD</option>
+                            <option value="EVEN">EVEN</option>
                         </select>
                         <label>Subject Code</label>
                         <input type="text" name="sub_code">

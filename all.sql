@@ -18,10 +18,11 @@ CREATE TABLE subjects(
 
 CREATE TABLE faculty(
     facid SERIAL PRIMARY KEY,
-    facinit VARCHAR(10) NOT NULL,
+    facinit VARCHAR(10) NOT NULL UNIQUE,
     facname VARCHAR(500) NOT NULL,
     facdes VARCHAR(500) NOT NULL,
     facqual VARCHAR(500) NOT NULL,
+    facdep VARCHAR(500) NOT NULL,
     facshdep VARCHAR(500) NOT NULL
 );
 
@@ -32,6 +33,7 @@ CREATE TABLE rooms(
     roomid SERIAL PRIMARY KEY UNIQUE,
     roomno VARCHAR(100) UNIQUE NOT NULL,
     roomdes VARCHAR(500) NOT NULL,
+    roomdep VARCHAR(500) NOT NULL,
     roomshdep VARCHAR(500) NOT NULL 
 );
 

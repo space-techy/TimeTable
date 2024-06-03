@@ -10,39 +10,34 @@
         <form action="/assign_slots" id="slot-form" method="POST">
             <label for="class">Class</label>
             <select id="class" name="class">
-                <!-- Example Class options -->
-                <option value="class1">Class 1</option>
-                <option value="class2">Class 2</option>
-                <!-- Add other class options here -->
+                <option selected disabled>Select</option>
+                {% for clas in input_class_res %}
+                    <option value="{{ clas[0] }}">{{ clas[0] }}</option>
+                {% endfor %}
             </select>
 
             <label for="division">Division</label>
             <select id="division" name="division">
                 <!-- Example Division options -->
-                <option value="divisionA">A</option>
-                <option value="divisionB">B</option>
-                <option value="divisionC">C</option>
+                <option selected disabled>Select</option>
                 <!-- Add other division options here -->
             </select>
 
             <label for="subject">Subject</label>
             <select id="subject" name="subject">
                 <!-- Example Subject options -->
-                <option value="subject1">Mathematics</option>
-                <option value="subject2">Physics</option>
-                <option value="ITVC">ITVC</option>
-                <option value="AOA">AOA</option>
+                <option selected disabled>Select</option>
                 <!-- Add other subject options here -->
             </select>
 
             <label for="room">Room</label>
             <select id="room" name="room">
-                <option value="B203">B203</option>
+                <option selected disabled>Select</option>
             </select>
 
             <label for="faculty">Faculty</label>
             <select id="faculty" name="faculty">
-                <option value="HNN">HNN</option>
+                <option selected disabled>Select</option>
             </select>
 
             <label for="multiple-faculty">Multiple Faculty</label>
@@ -51,17 +46,17 @@
             <label for="batch">Batch</label>
             <select id="batch" name="batch">
                 <!-- Example Batch options -->
+                <option selected disabled>Select</option>
                 <option value="NO">NO</option>
-                <option value="batch1">Batch 1</option>
-                <option value="batch2">Batch 2</option>
                 <!-- Add other batch options here -->
             </select>
 
             <label for="slots">Select Slots</label>
-            <select id="slots" name="slots" multiple>
+            <select id="slots" name="slots" multiple style="height: 30vh;">
                 <!-- Example Slot options -->
-                <option value="A1">L1|8:00-9:00|Friday</option>
-                <option value="B1">L2|9:00-10:00|Friday</option>
+                {% for slot in slots_res %}
+                    <option value="{{slot[0]}}">{{ slot[1] }}</option>
+                {% endfor %}
                 <!-- Add other slots options here -->
             </select>
 
@@ -104,6 +99,84 @@
         </table>
     </div>
 </div>
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", ()=>{
+        const class_id = document.getElementById("class")
+
+        class_id.addEventListener("change", (event)=>{
+            const selected_class = event.target.value;
+            const sel_json = {
+                "sel_class": selected_class
+            }
+            fetch("/get_div", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(sel_json)
+            })
+            .then(response => response.json() )
+            .then(data => {
+                const division = document.getElementById("division");
+                const subject = document.getElementById("subject");
+                const room = document.getElementById("room");
+                const faculty = document.getElementById("faculty");
+                const batch = document.getElementById("batch");
+
+                const div_res = data.divisions;
+                const sub_res = data.subjects;
+                const room_res = data.rooms;
+                const fac_res = data.faculty;
+
+                div_res.forEach((div)=>{
+                    const newOption = document.createElement("option");
+                    newOption.text = div[0];
+                    newOption.value = div[0];
+                    division.appendChild(newOption);
+                });
+                
+                division.addEventListener("change", (event)=>{
+                    const sel_batch = event.target.value;
+                    div_res.forEach((div) =>{
+                        if(sel_batch === div[0]){
+                            cur_batchs = [];
+                            for(let k = 0; k < div[1]; k++){
+                                cur_batchs = div[0] + String(k+1);
+                                const newOption = document.createElement("option");
+                                newOption.text = cur_batchs;
+                                newOption.value = cur_batchs;
+                                batch.appendChild(newOption);
+                            }
+                        }
+                    });
+                });
+
+                sub_res.forEach((sub)=>{
+                    const newOption = document.createElement("option");
+                    newOption.text = sub;
+                    subject.appendChild(newOption);
+                });
+
+                room_res.forEach((rooma)=>{
+                    const newOption = document.createElement("option");
+                    newOption.text = rooma;
+                    room.appendChild(newOption);
+                })
+
+                fac_res.forEach((fac)=>{
+                    const newOption = document.createElement("option");
+                    newOption.text = fac;
+                    faculty.appendChild(newOption);
+                })
+
+            })
+        });
+    });
+
+
+</script>
 
 
 {% endblock content %}

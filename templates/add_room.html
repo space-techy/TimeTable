@@ -8,6 +8,7 @@
     <div class="container text-center">
         <div class="row justify-content-around">
             <div class="col-4" style="background-color: lightgrey;">
+                {{error}}
                 <h3>Add Room</h3>
                 <hr>
                 <div class="add_sub">
@@ -33,14 +34,9 @@
                         <tr>
                             <th>Room Number</th>
                             <th>Room Description</th>
+                            <th>Department</th>
                             <th>Shared With Department</th>
                             <th>Options</th>
-                        </tr>
-                        <tr>
-                            <td>B202</td>
-                            <td>Comps Department</td>
-                            <td>ETXC</td>
-                            <td>Read/Write</td>
                         </tr>
                         {% for i in rooms %}
                             <tr>
