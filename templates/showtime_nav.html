@@ -7,8 +7,9 @@
           <label>Select Class:</label>
           <select name="sel_class" class="form-select" aria-label="Default select example">
               <option selected disabled>Open this select menu</option>
-              <option value="SY B. Tech COMP A">SY B. Tech COMP A</option>
-              <option value="SY B. Tech COMP B">SY B. Tech COMP B</option>
+              {% for class in class_res %}
+                  <option value="{{ class[0]+' '+class[1] }}">{{ class[0]+' '+class[1] }}</option>
+              {% endfor %}
           </select>
           <button>Submit</button>
         </form>
@@ -16,8 +17,9 @@
           <label>Select Room:</label>
           <select name="sel_room" class="form-select" aria-label="Default select example">
               <option selected disabled>Open this select menu</option>
-              <option value="B203">B203</option>
-              <option value="B204">B204</option>
+              {% for room in room_res %}
+                  <option value="{{ room[0] }}">{{ room[0] }}</option>
+              {% endfor %}
           </select>
           <button>Submit</button>
         </form>
@@ -25,8 +27,9 @@
           <label>Select Faculty:</label>
           <select name="sel_fac" class="form-select" aria-label="Default select example">
               <option selected disabled>Open this select menu</option>
-              <option value="HNN">HNN</option>
-              <option value="SM">SM</option>
+              {% for faculty in fac_res %}
+                  <option value="{{ faculty[0] }}">{{ faculty[0] }}</option>
+              {% endfor %}
           </select>
           <button>Submit</button>
         </form>

@@ -30,14 +30,7 @@
                             <option value="{{ g.CURR_USER }}">{{ g.CURR_USER }}</option>
                         </select>
                         <label>Batch</label>
-                        <select name="batch" class="form-select" aria-label="Default select example">
-                            <option selected disabled>Open this select menu</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                            <option value="E">E</option>
-                        </select>
+                        <input type="text" name="batch" placeholder="Name your Batch"/>
                         <label>No. of Divisions of Batch</label>
                         <input type="number" name="no_div" min="0" max="10">
                         <button type="submit">Submit</button>

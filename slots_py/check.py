@@ -13,17 +13,17 @@ cursor = conn.cursor()
 
 
 
-course_year = "FY"
-course = "B. Tech"
-course_department = "COMP"
-course_batch = "B"
+# course_year = "FY"
+# course = "B. Tech"
+# course_department = "COMP"
+# course_batch = "B"
 
 
-div_para = (course_year, course,course_department,course_batch)
-div_query = "SELECT no_of_div FROM divisions WHERE year = %s AND course = %s AND department = %s AND batch = %s"
-cursor.execute(div_query, div_para)
-div_res = cursor.fetchall()
-print(div_res[0][0])
+# div_para = (course_year, course,course_department,course_batch)
+# div_query = "SELECT no_of_div FROM divisions WHERE year = %s AND course = %s AND department = %s AND batch = %s"
+# cursor.execute(div_query, div_para)
+# div_res = cursor.fetchall()
+# print(div_res[0][0])
 
 # slots = ["B4"]
 # search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
@@ -40,3 +40,5 @@ print(div_res[0][0])
 #     print("Equal")
 # else:
 #     print("Not Equal")
+
+
