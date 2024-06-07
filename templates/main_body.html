@@ -2,28 +2,30 @@
 
 
 {% block content %}
-
-
+    {% if(g.CURR_USER != "ADMIN")%}
+        {% set isDisabled = "disabled" %}
+    {% else %}
+        {% set isDisabled = "" %}
+    {% endif %}
     <div class="container text-center">
         <div class="row justify-content-around" >
-            <div class="col-4" style="background-color: lightgrey;">
-                {{ error }}
+            <div class="col-4" style="background-color: lightgrey;" aria-disabled="true">
                 <div class="mk_time">
                     <h3>Create New Time Table</h3>
                     <hr>
                 </div>
-                <div class="cr_year_sem">
+                <div class="cr_year_sem" >
                     <form action="/create_timetable" method="POST">
                         <label>Year/Session</label>
-                        <input type="text" name="year_session" placeholder="Year or Session">
+                        <input type="text" name="year_session" placeholder="Year or Session" {{ isDisabled }}>
                         <p>Write Year e.g 2022_2023 </p>
                         <label>Select Semester</label>
-                        <select  name="sem" class="form-select" aria-label="Default select example">
-                            <option selected disabled>Open this select menu</option>
-                            <option value="odd">ODD</option>
-                            <option value="even">EVEN</option>
+                        <select  name="sem" class="form-select" aria-label="Default select example" {{ isDisabled }}>
+                            <option selected {{ isDisabled }}>Open this select menu</option>
+                            <option value="ODD">ODD</option>
+                            <option value="EVEN">EVEN</option>
                         </select>
-                        <button type="submit">Create</button>
+                        <button type="submit" {{ isDisabled }}>Create</button>
                     </form>
                 </div>
             </div>
@@ -44,11 +46,16 @@
                                 <td>{{ sem_t[1] }}</td>
                                 <td>{{ sem_t[2] }}</td>
                                 <td>
-                                    <form action="/edit_or_show_timetable" method="post">
-                                        <input type="hidden" name="year_sem_id" value="{{ sem_t[0] }}">
-                                        <button name="action" type="submit" value="edit">Edit</button>
-                                        <button name="action" type="submit" value="show">Show</button>
-                                    </form>
+                                    <div class="icons">
+                                        <form action="/all_show_timetable" method="POST">
+                                            <input type="hidden" name="year_sem_id" value="{{ sem_t[0] }}">
+                                            <input type="image" src="{{url_for('static', filename='/images/search.png')}}" class="icons-class" alt="search icon" name="action" value="search"/>
+                                        </form>|
+                                        <form action="/all_edit_timetable" method="POST">
+                                            <input type="hidden" name="year_sem_id" value="{{ sem_t[0] }}">
+                                            <input type="image" src="{{url_for('static', filename='/images/edit.png')}}"  class="icons-class" alt="edit icon" name="action" value="edit" />
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}

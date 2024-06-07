@@ -135,7 +135,7 @@ def home():
 def create_timetable():
     if request.method == "POST":
         year = request.form.get("year_session")
-        sem = request.form.get("sem").lower()
+        sem = request.form.get("sem")
         sem_year = sem + "_" + year
         global CURR_YEAR_SEM 
         CURR_YEAR_SEM = sem_year
@@ -160,27 +160,41 @@ def create_timetable():
             conn.commit()
             return redirect("/assign_slots")
         except:
-            conn.rollback()
             error = "TimeTable Already Exists!"
-            return render_template("main_body.html",error = error)
+            return redirect(url_for("create_timetable",error = error))
     else:
-        return render_template("main_body.html")
+        error = request.args.get("error")
+        if(error is None):
+            error = ""
+        cursor.execute("SELECT id,year,sem FROM all_timetables ORDER BY year DESC")
+        sems_table = cursor.fetchall()
+        return render_template("main_body.html", sems_table = sems_table,error = error)
 
-@app.route("/edit_or_show_timetable", methods = [ "GET", "POST"])
+@app.route("/all_show_timetable", methods = [ "GET", "POST"])
 @login_required
 def edorsho():
     if request.method == "POST":
         global CURR_YEAR_SEM
-        val = request.form.get("action")
         year_sem_id = request.form.get("year_sem_id")
         query_edit = "SELECT year_sem FROM all_timetables WHERE id = %s"
         cursor.execute(query_edit , (year_sem_id,))
         year_sem = cursor.fetchall()[0][0]
         CURR_YEAR_SEM = year_sem
-        if(val == "edit"):
-            return redirect("/assign_slots")
-        else:
-            return redirect ("/show_timetable")
+        return redirect ("/show_timetable")
+    else:
+        return redirect("/")
+
+@app.route("/all_edit_timetable", methods = [ "GET", "POST"])
+@login_required
+def edtime():
+    if request.method == "POST":
+        global CURR_YEAR_SEM
+        year_sem_id = request.form.get("year_sem_id")
+        query_edit = "SELECT year_sem FROM all_timetables WHERE id = %s"
+        cursor.execute(query_edit , (year_sem_id,))
+        year_sem = cursor.fetchall()[0][0]
+        CURR_YEAR_SEM = year_sem
+        return redirect("/assign_slots")
     else:
         return redirect("/")
 
@@ -206,17 +220,32 @@ def add_subject():
             conn.commit()
             return redirect("/add_subjects")
         except:
-            cursor.execute("SELECT DISTINCT(class) FROM divisions WHERE department = %s", (CURR_BRANCH,))
-            class_sub = cursor.fetchall()
-            cursor.execute("SELECT * FROM subjects")
-            subjects = cursor.fetchall()
-            return render_template("add_subjects.html", class_sub = class_sub,error = "Subjects Already Exists or Given Data is wrong!", subjects = subjects)
+            error = "Subjects Already Exists or Given Data is wrong!"
+            return redirect(url_for("add_subjects", error = error))
     else:
+        error = request.args.get("error")
+        if(error is None):
+            error = ""
         cursor.execute("SELECT DISTINCT(class) FROM divisions WHERE department = %s", (CURR_BRANCH,))
         class_sub = cursor.fetchall()
-        cursor.execute("SELECT * FROM subjects")
+        cursor.execute("SELECT * FROM subjects WHERE subdep =  %s",(CURR_BRANCH,))
         subjects = cursor.fetchall()
-        return render_template("add_subjects.html",class_sub = class_sub,subjects = subjects)
+        return render_template("add_subjects.html",class_sub = class_sub, error = error,subjects = subjects)
+    
+@app.route("/remove_subject", methods = ["POST",])
+@login_required
+def remove_subject():
+    sub_rem = request.form.get("del_sub")
+    del_sub_query = "DELETE FROM subjects WHERE subid = %s"
+    del_sub_para = (sub_rem,)
+    try:
+        cursor.execute(del_sub_query,del_sub_para)
+        conn.commit()
+        return redirect("/add_subjects")
+    except:
+        error = "Subject is already Removed or Some other error has occured!"
+        return redirect(url_for("add_subjects", error= error))
+
 
 
 @app.route("/add_faculty", methods=["GET", "POST"])
@@ -236,16 +265,34 @@ def add_faculty():
             conn.commit()
             return redirect("/add_faculty")
         except:
-            fac_query = f"SELECT * FROM faculty WHERE facdep = '{CURR_BRANCH}' OR facshdep = '{CURR_BRANCH}'"
-            cursor.execute(fac_query)
-            faculties = cursor.fetchall()
-            return render_template("add_faculty.html", error = "Faculty Already Exists or Input Given was Invalid!" ,faculties = faculties)
+            error = "Faculty Already Exists or Input Given was Invalid!"
+            return redirect(url_for("add_faculty", error = error))
+            
     else:
+        error = request.args.get("error")
+        if(error is None):
+            error = ""
         fac_query = f"SELECT * FROM faculty WHERE facdep = '{CURR_BRANCH}' OR facshdep = '{CURR_BRANCH}'"
         cursor.execute(fac_query)
         faculties = cursor.fetchall()
-        return render_template("add_faculty.html", faculties = faculties)
+        return render_template("add_faculty.html", error = error,faculties = faculties)
     
+
+@app.route("/remove_faculty", methods = ["POST",])
+@login_required
+def rem_fac():
+    del_fac = request.form.get("del_fac")
+    del_fac_query = "DELETE FROM faculty WHERE facid = %s"
+    del_fac_para = (del_fac,)
+    try:
+        cursor.execute(del_fac_query, del_fac_para)
+        conn.commit()
+        return redirect("/add_faculty")
+    except:
+        error = "Faculty Already Deleted or Some other error occured!"
+        return redirect(url_for("add_faculty", error = error))
+
+
 
 
 @app.route("/add_room", methods=["GET", "POST"])
@@ -263,16 +310,31 @@ def add_room():
             conn.commit()
             return redirect("/add_room")
         except:
-            room_query = f"SELECT * FROM rooms WHERE roomdep = '{CURR_BRANCH}' OR roomshdep = '{CURR_BRANCH}'"
-            cursor.execute(room_query)
-            rooms = cursor.fetchall()
-            return render_template("add_room.html", error = "Room Already Exists! Or Incorrect Data!" , rooms = rooms)
+            error = "Room Already Exists! Or Incorrect Data!"
+            return redirect(url_for("add_room", error = error))
     else:
+        error = request.args.get("error")
+        if(error is None):
+            error = ""
         room_query = f"SELECT * FROM rooms WHERE roomdep = '{CURR_BRANCH}' OR roomshdep = '{CURR_BRANCH}'"
         cursor.execute(room_query)
         rooms = cursor.fetchall()
-        return render_template("add_room.html", rooms = rooms)
+        return render_template("add_room.html", error = error,rooms = rooms)
     
+@app.route("/remove_room",methods=["POST",])
+@login_required
+def rem_room():
+    del_room = request.form.get("del_room")
+    del_room_query = "DELETE FROM rooms WHERE roomid = %s"
+    del_room_para = (del_room,)
+    try:
+        cursor.execute( del_room_query, del_room_para)
+        conn.commit()
+        return redirect("/add_room")
+    except:
+        error = "Room Already Deleted! Or Some other Problem arised!"
+        return redirect(url_for("add_room", error = error))
+
 
 @app.route("/add_div", methods=[ "GET", "POST"])
 @login_required
@@ -291,15 +353,30 @@ def add_div():
             conn.commit()
             return redirect("/add_div")
         except:
-            cursor.execute("SELECT * FROM divisions")
-            div_table = cursor.fetchall()
-            return render_template("add_div.html", error = "Batch with No. of Divisions is already added!", div_table = div_table)
+            error = "Batch with No. of Divisions is already added!"
+            return redirect(url_for("add_div", error = error))
     else:
-        cursor.execute("SELECT * FROM divisions")
+        error = request.args.get("error")
+        if(error is None):
+            error = ""
+        cursor.execute("SELECT * FROM divisions WHERE department = %s",(CURR_BRANCH,))
         div_table = cursor.fetchall()
-        return render_template("add_div.html", div_table = div_table)
+        return render_template("add_div.html", error = error,div_table = div_table)
 
 
+@app.route("/remove_div",methods=["POST",])
+@login_required
+def rem_div():
+    del_div = request.form.get("del_div")
+    del_div_query = "DELETE FROM divisions WHERE id = %s"
+    del_div_para = (del_div,)
+    try:
+        cursor.execute(del_div_query, del_div_para)
+        conn.commit()
+        return redirect("/add_div")
+    except:
+        error = "Batch already Deleted or Some other error occured!"
+        return redirect(url_for("add_div", error = error))
 
 
 
@@ -469,17 +546,29 @@ def get_div():
             "faculty" : faculty_res
         }
         return jsonify(send_results)
-
-
-
     
+
+# This is to remove particular slot from the timetable
+@app.route("/remove_slot",methods=["POST",])
+@login_required
+def rem_slot():
+    del_slot = request.form.get("del_slot")
+    del_slot_query = f"DELETE FROM { CURR_YEAR_SEM } WHERE id = %s"
+    del_slot_para = (del_slot,)
+    try:
+        cursor.execute(del_slot_query,del_slot_para)
+        conn.commit()
+        return redirect("/assign_slots")
+    except:
+        error = "Slot is already deleted or Some other error occured!"
+        return redirect(url_for("assign_slots", error = error))
+
 
 @app.route("/assign_slots", methods=["GET","POST"])
 @login_required
 def assign_slots():
     global CURR_BRANCH
     global CURR_YEAR_SEM
-    errorin = ""
     if request.method == "POST":
         college_class = request.form.get("class")
         division = request.form.get("division")
@@ -498,14 +587,14 @@ def assign_slots():
                 check_res = cursor.fetchall()
                 if(len(check_res) > 0):
                     errorin = "Batch or Division has already been assigned slots"
-                    return redirect("/assign_slots")
+                    return redirect(url_for("assign_slots", error = errorin))
         else:
-            check_para = (college_class,slots,batch,division, CURR_BRANCH)
+            check_para = (college_class,slots[0],batch,division, CURR_BRANCH)
             cursor.execute( check_query, check_para)
             check_res = cursor.fetchall()
             if(len(check_res) > 0):
                 errorin = "Batch or Division has already been assigned slots"
-                return redirect("/assign_slots")
+                return redirect(url_for("assign_slots", error = errorin))
         if(len(mult_faculty) > 0):
             faculty = faculty.strip() + "/" + mult_faculty.strip()
             fac_list = []
@@ -523,10 +612,8 @@ def assign_slots():
                         cursor.execute(fac_query,fac_para)
                         fac_res = cursor.fetchall()
                         if(len(fac_res >= 1)):
-                            query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
-                            cursor.execute(query)
-                            results = cursor.fetchall()
-                            return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Faculty is already alloted for that slot!")
+                            errorin = "Faculty is already alloted for that slot!"
+                            return redirect(url_for("assign_slots", error = errorin))
                         search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
                         cursor.execute(search_query, (slot,))
                         time_slots = cursor.fetchall()[0]
@@ -543,7 +630,7 @@ def assign_slots():
                             conn.commit()
                         except:
                             errorin = "Some problem Arised please check the fields again while submitting!"
-                            return redirect("/assign_slots")
+                            return redirect(url_for("assign_slots", error = errorin))
             else:
                 for curr_fac in fac_list:
                     fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND ((faculty  LIKE  %s) OR (faculty  LIKE  %s) OR (faculty  LIKE  %s))"
@@ -551,10 +638,8 @@ def assign_slots():
                     cursor.execute(fac_query,fac_para)
                     fac_res = cursor.fetchall()
                     if(len(fac_res) >= 1):
-                        query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
-                        cursor.execute(query)
-                        results = cursor.fetchall()
-                        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Faculty is already alloted for that slot!")
+                        errorin = "Faculty is already alloted for that slot!"
+                        return redirect(url_for("assign_slots", error = errorin))
                     search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
                     cursor.execute(search_query, (slots,))
                     time_slots = cursor.fetchall()[0]
@@ -571,7 +656,7 @@ def assign_slots():
                         conn.commit()
                     except:
                         errorin = "Some problem Arised please check the fields again while submitting!"
-                        return redirect("/assign_slots")
+                        return redirect(url_for("assign_slots", error = errorin))
         else:
             if(len(slots) > 1):
                 for slot in slots:
@@ -580,10 +665,8 @@ def assign_slots():
                     cursor.execute(fac_query,fac_para)
                     fac_res = cursor.fetchall()
                     if(len(fac_res) >= 1):
-                        query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
-                        cursor.execute(query)
-                        results = cursor.fetchall()
-                        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Faculty is already alloted for that slot!")
+                        errorin = "Faculty is already alloted for that slot!"
+                        return redirect(url_for("assign_slots", error = errorin))
                     search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
                     cursor.execute(search_query, (slot,))
                     time_slots = cursor.fetchall()[0]
@@ -600,17 +683,15 @@ def assign_slots():
                         conn.commit()
                     except:
                         errorin = "Some problem Arised please check the fields again while submitting!"
-                        return redirect("/assign_slots")
+                        return redirect(url_for("assign_slots", error = errorin))
             else:
                 fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND  faculty = %s"
                 fac_para = (slots[0],faculty)
                 cursor.execute(fac_query,fac_para)
                 fac_res = cursor.fetchall()
                 if(len(fac_res) >= 1):
-                    query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
-                    cursor.execute(query)
-                    results = cursor.fetchall()
-                    return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Faculty is already alloted for that slot!")
+                    errorin = "Faculty is already alloted for that slot!"
+                    return redirect(url_for("assign_slots", error = errorin))
                 search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
                 cursor.execute(search_query, (slots[0],))
                 time_slots = cursor.fetchall()[0]
@@ -628,7 +709,7 @@ def assign_slots():
                     return redirect("/assign_slots")
                 except:
                     errorin = "Some problem Arised please check the fields again while submitting!"
-                    return redirect("/assign_slots")
+                    return redirect(url_for("assign_slots", error = errorin))
             return redirect("/assign_slots")
         if(len(slots) > 1):
             for slot in slots:
@@ -645,9 +726,11 @@ def assign_slots():
                     cursor.execute(query)
                     results = cursor.fetchall()
                     if(len(room_res) >= 1):
-                        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Room is already alloted for that slot!")
+                        errorin = "Room is already alloted for that slot!"
+                        return redirect(url_for("assign_slots", error = errorin))
                     elif(len(batch_res) >= 1):
-                        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Batch of that Division is already alloted for that slot!")
+                        errorin = "Batch of that Division is already alloted for that slot!"
+                        return redirect(url_for("assign_slots", error = errorin))
                 search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
                 cursor.execute(search_query, (slot,))
                 time_slots = cursor.fetchall()[0]
@@ -665,7 +748,7 @@ def assign_slots():
                     return redirect("/assign_slots")
                 except:
                     errorin = "Some problem Arised please check the fields again while submitting!"
-                    return redirect("/assign_slots")
+                    return redirect(url_for("assign_slots", error = errorin))
         else:
             room_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE room = %s AND slot = %s"
             room_para = (room,slots[0])
@@ -680,9 +763,11 @@ def assign_slots():
                 cursor.execute(query)
                 results = cursor.fetchall()
                 if(len(room_res) >= 1):
-                    return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Room is already alloted for that slot!")
+                    errorin = "Room is already alloted for that slot!"
+                    return redirect(url_for("assign_slots", error = errorin))
                 elif(len(batch_res) >= 1):
-                    return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,error = "Batch of that Division is already alloted for that slot!")
+                    errorin = "Batch of that Division is already alloted for that slot!"
+                    return redirect(url_for("assign_slots", error = errorin))
             search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
             cursor.execute(search_query, (slots[0],))
             time_slots = cursor.fetchall()[0]
@@ -700,8 +785,11 @@ def assign_slots():
                 return redirect("/assign_slots")
             except:
                 errorin = "Some Problem has arised please check input fields  or data again!"
-                return redirect("/assign.html")
+                return redirect(url_for("assign_slots", error = errorin))
     else:
+        error = request.args.get("error")
+        if(error is None):
+            error = ""
         input_class_query = "SELECT DISTINCT(class) FROM divisions WHERE department = %s"
         input_class_para = ( CURR_BRANCH, )
         slots_para = "SELECT slots_name,slot_time_day FROM time_slots"
@@ -712,7 +800,7 @@ def assign_slots():
         query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
         cursor.execute(query)
         results = cursor.fetchall()
-        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,slots_res = slots_res, input_class_res = input_class_res,error = errorin)
+        return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,slots_res = slots_res, input_class_res = input_class_res,error = error)
     
 
 
@@ -817,10 +905,7 @@ def show_timetable():
                 table_body = table_body + "</tr>"
             table_body = table_body + "</tbody>"
             space_hod = total_columns - 1
-            table_foot = f"""<tfoot>
-                <tr><td>H.O.D</td><td colspan={space_hod}></td><td>PRINCIPAL</td></tr>
-            </tfoot>"""
-            complete_table = table_head + table_body + table_foot
+            complete_table = table_head + table_body
             return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, timetable = complete_table)
         elif(sel_room):
             time_slots = ["8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]

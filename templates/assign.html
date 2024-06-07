@@ -92,6 +92,12 @@
                         {% for data in row[1:] %}
                             <td>{{ data }}</td>
                         {% endfor %}
+                        <td>
+                            <form action="/remove_slot" method="POST">
+                                <input type="hidden" name="del_slot" value="{{ row[0] }}">
+                                <input type="image" src="{{url_for('static', filename='/images/delete.png')}}" class="del-icon" alt="search icon" name="delete" value="delete"/>
+                            </form>
+                        </td>
                     </tr>
                 {% endfor %}
                 <!-- Additional rows of assigned slots will be dynamically inserted here -->

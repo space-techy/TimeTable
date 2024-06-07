@@ -1,5 +1,3 @@
-
-
 .exist_table{
     display: flex;
     justify-content: center;
@@ -18,4 +16,21 @@ td{
 
 tr{
     border-bottom: solid black 1.5px;
+}
+
+.icons{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icons-class{
+    width: 15px; 
+    height: 15px;
+    margin: 5px;
+}
+
+.del-icon{
+    width: 20px; 
+    height: 20px;
 }

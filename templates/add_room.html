@@ -43,7 +43,12 @@
                                 {% for j in i[1:] %}
                                     <td>{{ j }}</td>
                                 {% endfor %}
-                                <td>Read/Write</td>
+                                <td>
+                                    <form action="/remove_room" method="POST">
+                                        <input type="hidden" name="del_room" value="{{ i[0] }}">
+                                        <input type="image" src="{{url_for('static', filename='/images/delete.png')}}" class="del-icon" alt="search icon" name="delete" value="delete"/>
+                                    </form>
+                                </td>
                             </tr>
                         {% endfor %}
                     </table>

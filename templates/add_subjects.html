@@ -8,9 +8,9 @@
     <div class="container text-center">
         <div class="row justify-content-around">
             <div class="col-4" style="background-color: lightgrey;">
+                {{ error }}
                 <h3>Add Subjects</h3>
                 <hr>
-                {{ error }}
                 <div class="add_sub">
                     <form action="/add_subjects" method="POST">
                         <label>Class</label>
@@ -73,7 +73,12 @@
                                 {% for j in i[1:] %}
                                     <td>{{ j }}</td>
                                 {% endfor %}
-                                <td>Read/Write</td>
+                                <td>
+                                    <form action="/remove_subject" method="POST">
+                                        <input type="hidden" name="del_sub" value="{{ i[0] }}">
+                                        <input type="image" src="{{url_for('static', filename='/images/delete.png')}}" class="del-icon" alt="search icon" name="delete" value="delete"/>
+                                    </form>
+                                </td>
                             </tr>
                         {% endfor %}
                     </table>
