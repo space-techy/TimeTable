@@ -1,25 +1,34 @@
 {% extends "showtime_nav.html" %}
 
 {% block timeshow %}
-    <div class="timetable-container">
+    {# <button onclick="downloadPDF()">Download</button> #}
+    <div class="timetable-container" id="time-table">
         <header>
             <h1>K. J. Somaiya College of Engineering</h1>
             <p>(A Constituent College of Somaiya Vidyavihar University)</p>
-            <h2>Time Table</h2>
+            <h5>Department of {{ g.CURR_DEPT }}</h5>
+            <h5>Time Table</h5>
         </header>
         <section class="class-info">
-            <strong>CLASS: SY M.Tech. ADMIN</strong><br>
-            <strong>ACADEMIC YEAR:  {{ CURR_YEAR_SEM[-9:-5] }}-{{ CURR_YEAR_SEM[-4:] }} SEMESTER: 
+            <strong style="float: left;">{{ infoImpo }}</strong>
+            <strong style="float: right;">Year:  {{ CURR_YEAR_SEM[-9:-5] }}-{{ CURR_YEAR_SEM[-4:] }} Semester: 
             {% if CURR_YEAR_SEM[0].upper() == "E" %}
                 EVEN
             {% else %}
                 ODD
             {% endif %}
+            </strong><br />
+            <strong style="float: right;">
+                {% if(fac_load)%}
+                    {{ fac_load }}
+                {% endif %}
             </strong>
         </section>
-        <table class="timetable">
+        <table class="timetable" id="time-table">
             {{ timetable | safe }}
         </table>
+        <strong style="float: left;">H.O.D</strong>
+        <strong style="float: right;">PRINCIPAL</strong>
     </div>
 
 {% endblock timeshow %}

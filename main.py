@@ -45,6 +45,7 @@ CURR_BRANCH = ""
 @app.before_request
 def load_user():
     g.CURR_USER = session.get("username")
+    g.CURR_DEPT = session.get("department")
     global CURR_BRANCH
     CURR_BRANCH = session.get("username")
 
@@ -58,13 +59,15 @@ def login_page():
         username = request.form.get("username")
         password = request.form.get("password")
         user_info = (username,password)
-        user_login = "SELECT user_id,username,user_password FROM users WHERE username = %s AND user_password = %s"
+        user_login = "SELECT user_id,username,user_password,department_name FROM users WHERE username = %s AND user_password = %s"
         cursor.execute(user_login,user_info)
         result = cursor.fetchall()
+        department_name = result[0][3]
         if(len(result) > 0):
             user_log = User(result[0][1])
             login_user(user_log)
             session["username"] = username
+            session["department"] = department_name
             session.permanent = True
             app.permanent_session_lifetime = timedelta(minutes=30)
             return redirect("/")
@@ -79,13 +82,14 @@ def register_page():
     if current_user.is_authenticated:
         return redirect("/")
     if request.method == "POST":
+        department_name = request.form.get("department_name")
         username = request.form.get("username")
         password = request.form.get("password")
         email_id = request.form.get("email_id")
         college_name = request.form.get("college_name")
         #This is to insert User Info into Database
-        user_reg = "INSERT INTO users(username,email_id,user_password,college_name) VALUES (%s,%s,%s,%s)"
-        param = (username,email_id,password,college_name)
+        user_reg = "INSERT INTO users(username,email_id,user_password,college_name,department_name) VALUES (%s,%s,%s,%s,%s)"
+        param = (username,email_id,password,college_name,department_name)
         cursor.execute(user_reg,param)
         #This is to fetch user id from the database to give user the access to website after logging IN
         user_id_reg = "SELECT user_id FROM users WHERE username = %s"
@@ -93,6 +97,7 @@ def register_page():
         cur_res = (cursor.fetchall())[0][0]
         user_res = User(cur_res)
         session["username"] = username
+        session["department"] = department_name
         login_user(user_res)
         conn.commit()
         return redirect("/")
@@ -812,6 +817,7 @@ def show_timetable():
         sel_room = request.form.get("sel_room")
         sel_fac = request.form.get("sel_fac")
         if(sel_class):
+            show_class = f"Class: {sel_class}"
             course_year = sel_class[0:2]
             course_batch = sel_class[-1]
             course = sel_class[3:10]
@@ -821,7 +827,7 @@ def show_timetable():
             cursor.execute(div_query, div_para)
             div_res = cursor.fetchall()
             no_of_div = div_res[0][0]
-            time_slots = ["8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
+            time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
             days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
             # Now we are working on the part of adding colspan for days
             day_colspan = {}
@@ -888,27 +894,38 @@ def show_timetable():
                     if(len(data_res) > 1):
                         for curr_batch in data_res:
                             if(rowspan_or_not):
-                                td = f'<td rowspan=2 colspan=1>{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[4] }</td>'
+                                td = f'<td rowspan=2 colspan=1>{ curr_batch[4] } <br /> {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } </td>'
                                 table_body = table_body + td
                             else:
-                                td = f'<td rowspan=1 colspan=1>{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[4] }</td>'
+                                td = f'<td rowspan=1 colspan=1>{ curr_batch[4] } <br /> {" "}  { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
                                 table_body = table_body + td
                     else:
                         curr_batch = data_res[0]
                         if(rowspan_or_not):
-                            td = f'<td rowspan=2 colspan={ no_of_div }>{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }</td>'
+                            td = f'<td rowspan=2 colspan={ no_of_div }>  {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }  </td>'
                             table_body = table_body + td
                         else:
-                            td = f'<td rowspan=1 colspan={ no_of_div }>{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }</td>'
+                            td = f'<td rowspan=1 colspan={ no_of_div }> {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } </td>'
                             table_body = table_body + td
                     next_time_res = False
                 table_body = table_body + "</tr>"
             table_body = table_body + "</tbody>"
-            space_hod = total_columns - 1
             complete_table = table_head + table_body
-            return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, timetable = complete_table)
+            class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
+            room_query = "SELECT roomno FROM rooms WHERE roomdep = %s OR roomshdep = %s"
+            fac_query = "SELECT facinit FROM faculty WHERE facdep = %s OR facshdep = %s"
+            class_para = (CURR_BRANCH,)
+            room_fac_para = (CURR_BRANCH,CURR_BRANCH)
+            cursor.execute(class_query, class_para)
+            class_res = cursor.fetchall()
+            cursor.execute(room_query, room_fac_para)
+            room_res = cursor.fetchall()
+            cursor.execute(fac_query, room_fac_para)
+            fac_res = cursor.fetchall()
+            return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, class_res = class_res, room_res = room_res, fac_res = fac_res,infoImpo = show_class,timetable = complete_table)
         elif(sel_room):
-            time_slots = ["8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
+            show_room = f"Room: {sel_room}"
+            time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
             days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
             table_head = "<thead><tr><th>Time/Day</th>"
             for day in days:
@@ -968,9 +985,22 @@ def show_timetable():
                 table_body = table_body + "</tr>"
             table_body = table_body + "</tbody>"
             complete_table = table_head + table_body
-            return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, timetable = complete_table)
+            class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
+            room_query = "SELECT roomno FROM rooms WHERE roomdep = %s OR roomshdep = %s"
+            fac_query = "SELECT facinit FROM faculty WHERE facdep = %s OR facshdep = %s"
+            class_para = (CURR_BRANCH,)
+            room_fac_para = (CURR_BRANCH,CURR_BRANCH)
+            cursor.execute(class_query, class_para)
+            class_res = cursor.fetchall()
+            cursor.execute(room_query, room_fac_para)
+            room_res = cursor.fetchall()
+            cursor.execute(fac_query, room_fac_para)
+            fac_res = cursor.fetchall()
+            return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, class_res = class_res, room_res = room_res, fac_res = fac_res,infoImpo = show_room,timetable = complete_table)
         elif(sel_fac):
-            time_slots = ["8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
+            show_faculty = ""
+            fac_load = ""
+            time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
             days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
             table_head = "<thead><tr><th>Time/Day</th>"
             for day in days:
@@ -1030,8 +1060,45 @@ def show_timetable():
                 table_body = table_body + "</tr>"
             table_body = table_body + "</tbody>"
             complete_table = table_head + table_body
-            return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, timetable = complete_table)
-        return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM)
+            class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
+            room_query = "SELECT roomno FROM rooms WHERE roomdep = %s OR roomshdep = %s"
+            fac_query = "SELECT facinit FROM faculty WHERE facdep = %s OR facshdep = %s"
+            class_para = (CURR_BRANCH,)
+            room_fac_para = (CURR_BRANCH,CURR_BRANCH)
+            cursor.execute(class_query, class_para)
+            class_res = cursor.fetchall()
+            cursor.execute(room_query, room_fac_para)
+            room_res = cursor.fetchall()
+            cursor.execute(fac_query, room_fac_para)
+            fac_res = cursor.fetchall()
+            show_fac_query = "SELECT facname FROM faculty WHERE facinit = %s"
+            show_fac_para = (sel_fac,)
+            cursor.execute(show_fac_query, show_fac_para)
+            show_fac_res = cursor.fetchall()
+            show_faculty = f"Faculty: {show_fac_res[0][0]} ({sel_fac})"
+            load_fac_query = f"SELECT sublecture,subtut,subprac FROM subjects WHERE subabb IN (SELECT subject FROM { CURR_YEAR_SEM } WHERE faculty = %s)"
+            cursor.execute(load_fac_query,show_fac_para)
+            load_fac_res = cursor.fetchall()
+            lec_load,tut_load,prac_load,total_load = 0,0,0,0
+            for load in load_fac_res:
+                lec_load = lec_load + load[0]
+                tut_load = tut_load + load[1]
+                prac_load = prac_load + load[2]
+            total_load = lec_load + tut_load + prac_load
+            fac_load = f"Theory: {lec_load} Tutorial: {tut_load} Practical: {prac_load} Total Load: {total_load}"
+            return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, class_res = class_res, room_res = room_res, fac_res = fac_res,infoImpo = show_faculty,fac_load = fac_load,timetable = complete_table)
+        class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
+        room_query = "SELECT roomno FROM rooms WHERE roomdep = %s OR roomshdep = %s"
+        fac_query = "SELECT facinit FROM faculty WHERE facdep = %s OR facshdep = %s"
+        class_para = (CURR_BRANCH,)
+        room_fac_para = (CURR_BRANCH,CURR_BRANCH)
+        cursor.execute(class_query, class_para)
+        class_res = cursor.fetchall()
+        cursor.execute(room_query, room_fac_para)
+        room_res = cursor.fetchall()
+        cursor.execute(fac_query, room_fac_para)
+        fac_res = cursor.fetchall()
+        return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, class_res = class_res, room_res = room_res, fac_res = fac_res)
     else:
         class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
         room_query = "SELECT roomno FROM rooms WHERE roomdep = %s OR roomshdep = %s"

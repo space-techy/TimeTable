@@ -1,40 +1,63 @@
 {% extends "index.html" %}
 
 {% block content %}
-    <nav class="navbar navbar-expand-lg bg-body-tertiary" style="background-color: #e3f2fd;">
-      <div class="container-fluid">
-        <form action="/show_timetable" method="POST">
-          <label>Select Class:</label>
-          <select name="sel_class" class="form-select" aria-label="Default select example">
-              <option selected disabled>Open this select menu</option>
-              {% for class in class_res %}
-                  <option value="{{ class[0]+' '+class[1] }}">{{ class[0]+' '+class[1] }}</option>
-              {% endfor %}
-          </select>
-          <button>Submit</button>
-        </form>
-        <form action="/show_timetable" method="POST">
-          <label>Select Room:</label>
-          <select name="sel_room" class="form-select" aria-label="Default select example">
-              <option selected disabled>Open this select menu</option>
-              {% for room in room_res %}
-                  <option value="{{ room[0] }}">{{ room[0] }}</option>
-              {% endfor %}
-          </select>
-          <button>Submit</button>
-        </form>
-        <form action="/show_timetable" method="POST">
-          <label>Select Faculty:</label>
-          <select name="sel_fac" class="form-select" aria-label="Default select example">
-              <option selected disabled>Open this select menu</option>
-              {% for faculty in fac_res %}
-                  <option value="{{ faculty[0] }}">{{ faculty[0] }}</option>
-              {% endfor %}
-          </select>
-          <button>Submit</button>
-        </form>
-      </div>
-    </nav>
-    {% block timeshow %}
-    {% endblock timeshow %}
+
+  <nav class="navbar navbar-expand-lg bg-body-tertiary" style="background-color: #e3f2fd;">
+    <div class="container-fluid">
+      <form action="/show_timetable" method="POST">
+        <label>Select Class:</label>
+        <select name="sel_class" class="form-select" aria-label="Default select example">
+            <option selected disabled>Open this select menu</option>
+            {% for class in class_res %}
+                <option value="{{ class[0]+' '+class[1] }}">{{ class[0]+' '+class[1] }}</option>
+            {% endfor %}
+        </select>
+        <button>Submit</button>
+      </form>
+      <form action="/show_timetable" method="POST">
+        <label>Select Room:</label>
+        <select name="sel_room" class="form-select" aria-label="Default select example">
+            <option selected disabled>Open this select menu</option>
+            {% for room in room_res %}
+                <option value="{{ room[0] }}">{{ room[0] }}</option>
+            {% endfor %}
+        </select>
+        <button>Submit</button>
+      </form>
+      <form action="/show_timetable" method="POST">
+        <label>Select Faculty:</label>
+        <select name="sel_fac" class="form-select" aria-label="Default select example">
+            <option selected disabled>Open this select menu</option>
+            {% for faculty in fac_res %}
+                <option value="{{ faculty[0] }}">{{ faculty[0] }}</option>
+            {% endfor %}
+        </select>
+        <button>Submit</button>
+      </form>
+    </div>
+  </nav>
+  {% block timeshow %}
+  {% endblock timeshow %}
+
+
+  <script>
+    async function downloadPDF(){
+      
+      const { jsPDF } = window.jspdf;
+
+      const canvas = await html2canvas(document.getElementById("time-table"));
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF();
+      // Add the image data to the PDF
+      pdf.addImage(imgData, 'PNG', 10, 10, 190, 0); // Adjust dimensions as needed
+
+      // Save the PDF
+      pdf.save("Timetable.pdf");
+
+    }
+  
+  </script>
+
+
 {% endblock content %}
