@@ -6,29 +6,43 @@
 
     <div class="container text-center">
         <div class="row justify-content-around">
-            <div style="background-color: lightgrey;">
-                <h3>Import Excel</h3>
-                <hr>
-                <div class="add_sub">
+            <div class="col-12 col-md-6 py-5 form-container create-div">
+                <div class="mk_time">
+                    <h3>Import Excel</h3>
+                    <hr>
+                </div>
+                <div class="mk_time">
                     <form method="POST" enctype="multipart/form-data">
-                        <label>Class</label>
-                        <select name="import_class" id="import_class" class="form-select" aria-label="Default select example">
-                            <option selected disabled>Select</option>
-                            {% for class in class_batch %}
-                                <option value="{{ class[0] }}">{{ class[0] }}</option>
-                            {% endfor %}
-                        </select>
-                        <label>Batch</label>
-                        <input type="text" id="import_batch" name="import_batch" placeholder="Enter Batch"/>
-                        <label>TimeTable</label>
-                        <select name="import_year_sem" id="import_year_sem" class="form-select" aria-label="Default select example">
-                            <option selected disabled>Select</option>
-                            {% for year in year_sem %}
-                                <option value="{{ year[0] }}">{{ year[0] }}</option>
-                            {% endfor %}
-                        </select>
-                        <input type="file" id="import_file" name="import_file" accept=".xlsx, .xls" />
-                        <button type="button" onclick="uploadFile()">Submit</button>
+                        <div class="form-group d-flex align-items-center">
+                            <label><strong>Class :</strong></label>
+                            <select name="import_class" id="import_class" class="form-select" aria-label="Default select example">
+                                <option selected disabled>Select</option>
+                                {% for class in class_batch %}
+                                    <option value="{{ class[0] }}">{{ class[0] }}</option>
+                                {% endfor %}
+                            </select>
+                            <br />
+                        </div>
+                        <div class="form-group d-flex align-items-center">
+                            <label><strong>Batch :</strong></label>
+                            <input type="text" id="import_batch" name="import_batch" placeholder="Enter Batch"/>
+                            <br />
+                        </div>
+                        <div class="form-group d-flex align-items-center">
+                            <label><strong>TimeTable :</strong></label>
+                            <select name="import_year_sem" id="import_year_sem" class="form-select" aria-label="Default select example">
+                                <option selected disabled>Select</option>
+                                {% for year in year_sem %}
+                                    <option value="{{ year[0] }}">{{ year[0].upper() }}</option>
+                                {% endfor %}
+                            </select>
+                            <br />
+                        </div>
+                        <div class="form-group d-flex align-items-center">
+                            <input type="file" id="import_file" name="import_file" accept=".xlsx, .xls" style="margin-left: 20%;"/>
+                            <br />
+                        </div>
+                        <button type="button" class="submit" onclick="uploadFile()">Submit</button>
                     </form>
                 </div>
                 <p id="message"></p>

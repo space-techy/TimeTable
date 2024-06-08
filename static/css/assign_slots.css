@@ -51,11 +51,11 @@ select, input[type="text"] {
 }
 
 .assign-theory {
-    background-color: #4CAF50; /* Green */
+    background-color: #4CAF50 !important; /* Green */
 }
 
 .assign-practical {
-    background-color: #f44336; /* Red */
+    background-color: #f44336 !important; /* Red */
 }
 
 .assigned-slots {

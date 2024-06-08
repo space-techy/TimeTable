@@ -5,35 +5,49 @@
 
 
     <div class="container text-center">
-        <div class="row justify-content-around">
-            <div class="col-4" style="background-color: lightgrey;">
+        <div class="grid-table">
+            <div class="col-12 col-md-6 py-5 form-container create-div">
                 {{ error }}
-                <h3>Add Faculty</h3>
-                <hr>
-                <div class="add_sub">
+                <div class="mk_time">
+                    <h3>Add Faculty</h3>
+                    <hr>
+                </div>
+                <div class="mk_time">
                     <form action="/add_faculty" method="POST">
-                        <label>Faculty Initials</label>
-                        <input type="text" name="faculty_initials">
-                        <br>
-                        <label>Faculty Name</label>
-                        <input type="text" name="faculty_name">
-                        <br>
-                        <label>Designation</label>
-                        <input type="text" name="faculty_designation">
-                        <br>
-                        <label>Qualification</label>
-                        <input type="text" name="faculty_qualification">
-                        <br>
-                        <label>Shared With Department</label>
-                        <input type="text" name="shared_dep">
-                        <br>
+                        <div class="form-group d-flex align-items-center">
+                            <label>Faculty Initials :</label>
+                            <input type="text" name="faculty_initials">
+                            <br>
+                        </div>
+                        <div class="form-group d-flex align-items-center">
+                            <label>Faculty Name :</label>
+                            <input type="text" name="faculty_name">
+                            <br>
+                        </div>
+                        <div class="form-group d-flex align-items-center">
+                            <label>Designation :</label>
+                            <input type="text" name="faculty_designation">
+                            <br>
+                        </div>
+                        <div class="form-group d-flex align-items-center">
+                            <label>Qualification :</label>
+                            <input type="text" name="faculty_qualification">
+                            <br>
+                        </div>
+                        <div class="form-group d-flex align-items-center">
+                            <label>Shared With Department :</label>
+                            <input type="text" name="shared_dep">
+                            <br>
+                        </div>
                         <button type="submit"> Add Faculty</button>
                     </form>
                 </div>
             </div>
-            <div class="col-4" style="background-color:  #c9dde7;">
-                <h3>List of Faculty</h3>
-                <hr>
+            <div class="col-12 col-md-6 py-5 form-container show-div" style="background-color: #c9dde7;">
+                <div class="mk_time mk_time_sh">
+                    <h3>List of Faculty</h3>
+                    <hr>
+                </div>
                 <div class="exist_table">
                     <table style="width: 100%;">
                         <tr>

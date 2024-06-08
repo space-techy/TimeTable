@@ -2,44 +2,64 @@
 
 
 {% block content %}
-    {{error}}
+    
     <div class="container text-center">
-        <div class="row justify-content-around">
-            <div class="col-4" style="background-color: lightgrey;">
-                <h3>Add Division</h3>
-                <hr>
-                <div class="add_sub">
+        <div class="grid-table">
+            <div class="col-12 col-md-6 py-5 form-container create-div">
+                {{error}}
+                <div class="mk_time">
+                    <h3>Add Division</h3>
+                    <hr>
+                </div>
+                <div class="mk_time">
                     <form action="/add_div" method="POST">
-                        <label>Course</label>
-                        <select name="course" class="form-select" aria-label="Default select example">
-                            <option selected disabled>Open this select menu</option>
-                            <option value="B. Tech">B. Tech</option>
-                            <option value="M. Tech">M. Tech</option>
-                        </select>
-                        <label>Year</label>
-                        <select name="year" class="form-select" aria-label="Default select example">
-                            <option selected disabled>Open this select menu</option>
-                            <option value="FY">First Year (FY)</option>
-                            <option value="SY">Second Year (SY)</option>
-                            <option value="TY">Third Year (TY)</option>
-                            <option value="LY">Last Year (LY)</option>
-                        </select>
-                        <label>Department</label>
-                        <select name="department" class="form-select" aria-label="Default select example">
-                            <option selected disabled>Open this select menu</option>
-                            <option value="{{ g.CURR_USER }}">{{ g.CURR_USER }}</option>
-                        </select>
-                        <label>Batch</label>
-                        <input type="text" name="batch" placeholder="Name your Batch"/>
-                        <label>No. of Divisions of Batch</label>
-                        <input type="number" name="no_div" min="0" max="10">
+                        <div class="form-group d-flex align-items-center">
+                            <label>Course</label>
+                            <select name="course" class="form-select" aria-label="Default select example">
+                                <option selected disabled>Select Course</option>
+                                <option value="B. Tech">B. Tech</option>
+                                <option value="M. Tech">M. Tech</option>
+                            </select>
+                            <br />
+                        </div>
+                        <div class="form-group d-flex align-items-center">
+                            <label>Year</label>
+                            <select name="year" class="form-select" aria-label="Default select example">
+                                <option selected disabled>Select Year</option>
+                                <option value="FY">First Year (FY)</option>
+                                <option value="SY">Second Year (SY)</option>
+                                <option value="TY">Third Year (TY)</option>
+                                <option value="LY">Last Year (LY)</option>
+                            </select>
+                            <br />
+                        </div>
+                        <div class="form-group d-flex align-items-center">
+                            <label>Department</label>
+                            <select name="department" class="form-select" aria-label="Default select example">
+                                <option selected disabled>Select Department</option>
+                                <option value="{{ g.CURR_USER }}">{{ g.CURR_USER }}</option>
+                            </select>
+                            <br />
+                        </div>
+                        <div class="form-group d-flex align-items-center">
+                            <label>Batch</label>
+                            <input type="text" name="batch" placeholder="Name your Batch"/>
+                            <br />
+                        </div>
+                        <div class="form-group d-flex align-items-center">
+                            <label>No. of Divisions of Batch</label>
+                            <input type="number" name="no_div" min="0" max="10">
+                            <br />
+                        </div>
                         <button type="submit">Submit</button>
                     </form>
                 </div>
             </div>
-            <div class="col-4" style="background-color:  #c9dde7;">
-                <h3>List of Subjects Already Added</h3>
-                <hr>
+            <div class="col-12 col-md-6 py-5 form-container show-div" style="background-color: #c9dde7;">
+                <div class="mk_time mk_time_sh">
+                    <h3>List of Divisions</h3>
+                    <hr>
+                </div>
                 <div class="exist_table">
                     <table style="width: 100%;">
                         <tr>

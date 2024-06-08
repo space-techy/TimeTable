@@ -2,33 +2,36 @@
 
 {% block timeshow %}
     {# <button onclick="downloadPDF()">Download</button> #}
-    <div class="timetable-container" id="time-table">
-        <header>
-            <h1>K. J. Somaiya College of Engineering</h1>
-            <p>(A Constituent College of Somaiya Vidyavihar University)</p>
-            <h5>Department of {{ g.CURR_DEPT }}</h5>
-            <h5>Time Table</h5>
-        </header>
-        <section class="class-info">
-            <strong style="float: left;">{{ infoImpo }}</strong>
-            <strong style="float: right;">Year:  {{ CURR_YEAR_SEM[-9:-5] }}-{{ CURR_YEAR_SEM[-4:] }} Semester: 
-            {% if CURR_YEAR_SEM[0].upper() == "E" %}
-                EVEN
-            {% else %}
-                ODD
-            {% endif %}
-            </strong><br />
-            <strong style="float: right;">
-                {% if(fac_load)%}
-                    {{ fac_load }}
+    {% if(timetable) %}
+        <div class="timetable-container" id="time-table" style="margin-top: 2%;">
+            <header>
+                <h1>K. J. Somaiya College of Engineering</h1>
+                <p>(A Constituent College of Somaiya Vidyavihar University)</p>
+                <h5>Department of {{ g.CURR_DEPT }}</h5>
+                <h5>Time Table</h5>
+            </header>
+            <section class="class-info">
+                <p style="float: left;">{{ infoImpo }}</p>
+                <p style="float: right;">Year:  {{ CURR_YEAR_SEM[-9:-5] }}-{{ CURR_YEAR_SEM[-4:] }} Semester: 
+                {% if CURR_YEAR_SEM[0].upper() == "E" %}
+                    EVEN
+                {% else %}
+                    ODD
                 {% endif %}
-            </strong>
-        </section>
-        <table class="timetable" id="time-table">
-            {{ timetable | safe }}
-        </table>
-        <strong style="float: left;">H.O.D</strong>
-        <strong style="float: right;">PRINCIPAL</strong>
-    </div>
+                </p><br />
+                <p></p>
+                <p style="float: right;">
+                    {% if(fac_load)%}
+                        {{ fac_load }}
+                    {% endif %}
+                </p>
+            </section>
+            <table class="timetable" id="time-table">
+                {{ timetable | safe }}
+            </table>
+            <p style="float: left;">H.O.D</p>
+            <p style="float: right;">PRINCIPAL</p>
+        </div>
+    {% endif %}
 
 {% endblock timeshow %}

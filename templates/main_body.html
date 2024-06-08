@@ -8,62 +8,74 @@
         {% set isDisabled = "" %}
     {% endif %}
     <div class="container text-center">
-        <div class="row justify-content-around" >
-            <div class="col-4" style="background-color: lightgrey;" aria-disabled="true">
+        <div class="grid-table">
+            <div class="col-12 col-md-6 py-5 form-container create-div">
+                {{error}}
                 <div class="mk_time">
                     <h3>Create New Time Table</h3>
                     <hr>
                 </div>
-                <div class="cr_year_sem" >
+                <div class="cr_year_sem">
                     <form action="/create_timetable" method="POST">
-                        <label>Year/Session</label>
-                        <input type="text" name="year_session" placeholder="Year or Session" {{ isDisabled }}>
-                        <p>Write Year e.g 2022_2023 </p>
-                        <label>Select Semester</label>
-                        <select  name="sem" class="form-select" aria-label="Default select example" {{ isDisabled }}>
-                            <option selected {{ isDisabled }}>Open this select menu</option>
-                            <option value="ODD">ODD</option>
-                            <option value="EVEN">EVEN</option>
-                        </select>
-                        <button type="submit" {{ isDisabled }}>Create</button>
+                        <div class="form-group d-flex align-items-center">
+                            <label for="year_session" class="form-label">Year/Session :</label>
+                            <input type="text" id="year_session" name="year_session" class="form-control" placeholder="Year or Session" {{ isDisabled }}>
+                        </div>
+                        <p style="margin-top: -8%;margin-right: -31%;">Write Year e.g 2022_2023</p>
+                        <div class="form-group d-flex align-items-center mt-2">
+                            <label for="sem" class="form-label">Select Semester :</label>
+                            <select id="sem" name="sem" class="form-select" aria-label="Default select example" {{ isDisabled }}>
+                                <option selected {{ isDisabled }}>Semester</option>
+                                <option value="ODD">ODD</option>
+                                <option value="EVEN">EVEN</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="submit-btn mt-3" {{ isDisabled }}>Create</button>
                     </form>
                 </div>
             </div>
-            <div class="col-4" style="background-color: #c9dde7;">
-                <div class="exist_time">
+            <div class="col-12 col-md-6 py-5 form-container show-div" style="background-color: #c9dde7;">
+                <div class="mk_time mk_time_sh">
                     <h3>Existing Timetables</h3>
                     <hr>
                 </div>
                 <div class="exist_table">
-                    <table style="width: 100%;">
-                        <tr>
-                            <th>Year</th>
-                            <th>Semester</th>
-                            <th>Options</th>
-                        </tr>
-                        {% for sem_t in sems_table %}
+                    <table>
+                        <thead>
                             <tr>
-                                <td>{{ sem_t[1] }}</td>
-                                <td>{{ sem_t[2] }}</td>
-                                <td>
-                                    <div class="icons">
-                                        <form action="/all_show_timetable" method="POST">
-                                            <input type="hidden" name="year_sem_id" value="{{ sem_t[0] }}">
-                                            <input type="image" src="{{url_for('static', filename='/images/search.png')}}" class="icons-class" alt="search icon" name="action" value="search"/>
-                                        </form>|
-                                        <form action="/all_edit_timetable" method="POST">
-                                            <input type="hidden" name="year_sem_id" value="{{ sem_t[0] }}">
-                                            <input type="image" src="{{url_for('static', filename='/images/edit.png')}}"  class="icons-class" alt="edit icon" name="action" value="edit" />
-                                        </form>
-                                    </div>
-                                </td>
+                                <th>Year</th>
+                                <th>Semester</th>
+                                <th>Options</th>
                             </tr>
-                        {% endfor %}
+                        </thead>
+                        <tbody>
+                            {% for sem_t in sems_table %}
+                                <tr>
+                                    <td>{{ sem_t[1] }}</td>
+                                    <td>{{ sem_t[2] }}</td>
+                                    <td>
+                                        <div class="icons">
+                                            <form action="/all_show_timetable" method="POST">
+                                                <input type="hidden" name="year_sem_id" value="{{ sem_t[0] }}">
+                                                <input type="image" src="{{url_for('static', filename='/images/search.png')}}" class="icons-class" alt="search icon" name="action" value="search"/>
+                                            </form>
+                                            |
+                                            <form action="/all_edit_timetable" method="POST">
+                                                <input type="hidden" name="year_sem_id" value="{{ sem_t[0] }}">
+                                                <input type="image" src="{{url_for('static', filename='/images/edit.png')}}" class="icons-class" alt="edit icon" name="action" value="edit" />
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
+
+
 
 
 {% endblock %}

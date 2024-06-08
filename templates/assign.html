@@ -2,107 +2,135 @@
 
 
 {% block content %}
-<div class="container">
-    <div class="form-container">
-        <p>{{ error }}</p>
-        <h2>Assign Theory Slots</h2>
-        <h2>{{ CURR_YEAR_SEM.upper() }}</h2>
-        <form action="/assign_slots" id="slot-form" method="POST">
-            <label for="class">Class</label>
-            <select id="class" name="class">
-                <option selected disabled>Select</option>
-                {% for clas in input_class_res %}
-                    <option value="{{ clas[0] }}">{{ clas[0] }}</option>
-                {% endfor %}
-            </select>
-
-            <label for="division">Division</label>
-            <select id="division" name="division">
-                <!-- Example Division options -->
-                <option selected disabled>Select</option>
-                <!-- Add other division options here -->
-            </select>
-
-            <label for="subject">Subject</label>
-            <select id="subject" name="subject">
-                <!-- Example Subject options -->
-                <option selected disabled>Select</option>
-                <!-- Add other subject options here -->
-            </select>
-
-            <label for="room">Room</label>
-            <select id="room" name="room">
-                <option selected disabled>Select</option>
-            </select>
-
-            <label for="faculty">Faculty</label>
-            <select id="faculty" name="faculty">
-                <option selected disabled>Select</option>
-            </select>
-
-            <label for="multiple-faculty">Multiple Faculty</label>
-            <input type="text" id="multiple-faculty" name="multiple-faculty">
-
-            <label for="batch">Batch</label>
-            <select id="batch" name="batch">
-                <!-- Example Batch options -->
-                <option selected disabled>Select</option>
-                <option value="NO">NO</option>
-                <!-- Add other batch options here -->
-            </select>
-
-            <label for="slots">Select Slots</label>
-            <select id="slots" name="slots" multiple style="height: 30vh;">
-                <!-- Example Slot options -->
-                {% for slot in slots_res %}
-                    <option value="{{slot[0]}}">{{ slot[1] }}</option>
-                {% endfor %}
-                <!-- Add other slots options here -->
-            </select>
-
-            <div class="form-buttons">
-                <button type="submit" class="btn assign-theory" name="submit-button" value="L">Assign Theory</button>
-                <button type="submit" class="btn assign-practical" name="submit-button" value="P">Assign Practical</button>
+<div class="container text-center">
+    <div class="grid-table">
+        <div class="col-12 col-md-6 py-5 form-container create-div">
+            <p>{{ error }}</p>
+            <div class="mk_time">
+                <h2>Assign Theory Slots</h2>
+                <h2>{{ CURR_YEAR_SEM.upper() }}</h2>
+                <hr>
             </div>
-        </form>
-    </div>
-    <div class="assigned-slots-container">
-        <h2>Assigned Slots</h2>
-        <h2>{{ g.CURR_USER }} DEPARTMENT</h2>
-        <table class="assigned-slots">
-            <thead>
-                <tr>
-                    <th>Class</th>
-                    <th>Subject</th>
-                    <th>Slot</th>
-                    <th>Day</th>
-                    <th>Time</th>
-                    <th>Faculty</th>
-                    <th>Room</th>
-                    <th>Division</th>
-                    <th>Batch</th>
-                    <th>Type</th>
-                    <th>Options</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Placeholder row -->
-                {% for row in results %}
-                    <tr>
-                        {% for data in row[1:] %}
-                            <td>{{ data }}</td>
+            <div class="mk_time">
+                <form action="/assign_slots" id="slot-form" method="POST">
+                    <div class="form-group d-flex align-items-center">
+                        <label for="class">Class :</label>
+                        <select id="class" name="class">
+                            <option selected disabled>Select</option>
+                            {% for clas in input_class_res %}
+                                <option value="{{ clas[0] }}">{{ clas[0] }}</option>
+                            {% endfor %}
+                        </select>
+                        <br />
+                    </div>
+                    <div class="form-group d-flex align-items-center">
+                        <label for="division">Division :</label>
+                        <select id="division" name="division">
+                            <!-- Example Division options -->
+                            <option selected disabled>Select</option>
+                            <!-- Add other division options here -->
+                        </select>
+                        <br />
+                    </div>
+                    <div class="form-group d-flex align-items-center">
+                        <label for="subject">Subject :</label>
+                        <select id="subject" name="subject">
+                            <!-- Example Subject options -->
+                            <option selected disabled>Select</option>
+                            <!-- Add other subject options here -->
+                        </select>
+                        <br />
+                    </div>
+                    <div class="form-group d-flex align-items-center">
+                        <label for="room">Room :</label>
+                        <select id="room" name="room">
+                            <option selected disabled>Select</option>
+                        </select>
+                        <br />
+                    </div>
+                    <div class="form-group d-flex align-items-center">
+                        <label for="faculty">Faculty :</label>
+                        <select id="faculty" name="faculty">
+                            <option selected disabled>Select</option>
+                        </select>
+                        <br />
+                    </div>
+                    <div class="form-group d-flex align-items-center">
+                        <label for="multiple-faculty">Multiple Faculty :</label>
+                        <input type="text" id="multiple-faculty" name="multiple-faculty">
+                        <br />
+                    </div>
+                    <div class="form-group d-flex align-items-center">
+                        <label for="batch">Batch :</label>
+                        <select id="batch" name="batch">
+                            <!-- Example Batch options -->
+                            <option selected disabled>Select</option>
+                            <option value="NO">NO</option>
+                            <!-- Add other batch options here -->
+                        </select>
+                        <br />
+                    </div>
+                    <div class="form-group d-flex align-items-center">
+                        <label for="slots">Select Slots :</label>
+                        <select id="slots" name="slots" multiple style="height: 30vh;">
+                            <!-- Example Slot options -->
+                            {% for slot in slots_res %}
+                                <option value="{{slot[0]}}">{{ slot[1] }}</option>
+                            {% endfor %}
+                            <!-- Add other slots options here -->
+                        </select>
+                        <br />
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="btn assign-theory" name="submit-button" value="L">Assign Theory</button>
+                        <button type="submit" class="btn assign-practical" name="submit-button" value="P">Assign Practical</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 py-5 form-container show-div" style="background-color: #c9dde7;margin-left: 5%;">
+            <div class="mk_time mk_time_sh">
+                <h2>Assigned Slots</h2>
+                <h2>{{ g.CURR_DEPT }} Department</h2>
+                <hr>
+            </div>
+            <div class="exist_table">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Subject</th>
+                            <th>Slot</th>
+                            <th>Day</th>
+                            <th>Time</th>
+                            <th>Faculty</th>
+                            <th>Room</th>
+                            <th>Division</th>
+                            <th>Batch</th>
+                            <th>Type</th>
+                            <th>Options</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Placeholder row -->
+                        {% for row in results %}
+                            <tr>
+                                {% for data in row[1:] %}
+                                    <td>{{ data }}</td>
+                                {% endfor %}
+                                <td>
+                                    <form action="/remove_slot" method="POST">
+                                        <input type="hidden" name="del_slot" value="{{ row[0] }}">
+                                        <input type="image" src="{{url_for('static', filename='/images/delete.png')}}" class="del-icon" alt="search icon" name="delete" value="delete"/>
+                                    </form>
+                                </td>
+                            </tr>
                         {% endfor %}
-                        <td>
-                            <form action="/remove_slot" method="POST">
-                                <input type="hidden" name="del_slot" value="{{ row[0] }}">
-                                <input type="image" src="{{url_for('static', filename='/images/delete.png')}}" class="del-icon" alt="search icon" name="delete" value="delete"/>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-                <!-- Additional rows of assigned slots will be dynamically inserted here -->
-            </tbody>
-        </table>
+                        <!-- Additional rows of assigned slots will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
