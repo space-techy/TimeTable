@@ -845,7 +845,7 @@ def show_timetable():
                     total_columns = total_columns + 1
             
             # This code is for creating html table head with colspan
-            table_head = "<thead><tr><th>Time/Day</th>"
+            table_head = "<thead><tr><th style='width: 8%;'>Time/Day</th>"
             for day in days:
                 if(day_colspan[day] > 1):
                     table_head = table_head + f"<th colspan={day_colspan[day]}>{day}</th>"
@@ -927,7 +927,7 @@ def show_timetable():
             show_room = f"Room: {sel_room}"
             time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
             days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-            table_head = "<thead><tr><th>Time/Day</th>"
+            table_head = "<thead><tr><th style='width: 8%;'>Time/Day</th>"
             for day in days:
                 table_head = table_head + f"<th>{day}</th>"
             table_head = table_head + "</tr></thead>"
@@ -1002,7 +1002,7 @@ def show_timetable():
             fac_load = ""
             time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
             days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-            table_head = "<thead><tr><th>Time/Day</th>"
+            table_head = "<thead><tr><th style='width: 8%;'>Time/Day</th>"
             for day in days:
                 table_head = table_head + f"<th>{day}</th>"
             table_head = table_head + "</tr></thead>"
