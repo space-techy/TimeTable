@@ -2,6 +2,9 @@
 
 {% block content %}
     <div class="log_h1">
+        {% if  error%}
+            {{ error }}
+        {% endif %}
         <h1>Register</h1>
     </div>
     <div class="main_log_reg reg_body">
@@ -27,9 +30,7 @@
           <label for="floatingPassword">Password</label>
         </div>
         <button type="submit" class="lr_but">Register</button>
-      </form>
-      <form action="/login_redirect" method="GET">
-        <button type="submit" class="lr_but">Login</button>
+        <p>Already Registered? <a href="/login">Login</a></p>
       </form>
     </div>
 {% endblock%}

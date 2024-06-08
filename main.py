@@ -72,9 +72,11 @@ def login_page():
             app.permanent_session_lifetime = timedelta(minutes=30)
             return redirect("/")
         else:
-            return redirect("/login")
+            error = "User or Password wrong!"
+            return redirect(url_for("login",error = error))
     else:
-        return render_template("login.html")
+        error = request.args.get("error")
+        return render_template("login.html",error = error)
 
 #This is for users to Register
 @app.route("/register", methods = ["GET", "POST"])
@@ -90,19 +92,25 @@ def register_page():
         #This is to insert User Info into Database
         user_reg = "INSERT INTO users(username,email_id,user_password,college_name,department_name) VALUES (%s,%s,%s,%s,%s)"
         param = (username,email_id,password,college_name,department_name)
-        cursor.execute(user_reg,param)
-        #This is to fetch user id from the database to give user the access to website after logging IN
-        user_id_reg = "SELECT user_id FROM users WHERE username = %s"
-        cursor.execute(user_id_reg,(username,))
-        cur_res = (cursor.fetchall())[0][0]
-        user_res = User(cur_res)
-        session["username"] = username
-        session["department"] = department_name
-        login_user(user_res)
-        conn.commit()
-        return redirect("/")
+        try:
+            cursor.execute(user_reg,param)
+            conn.commit()
+            #This is to fetch user id from the database to give user the access to website after logging IN
+            user_id_reg = "SELECT user_id FROM users WHERE username = %s"
+            cursor.execute(user_id_reg,(username,))
+            cur_res = (cursor.fetchall())[0][0]
+            user_res = User(cur_res)
+            session["username"] = username
+            session["department"] = department_name
+            login_user(user_res)
+            return redirect("/")
+        except:
+            error = "User already registered!"
+            return redirect(url_for("register", error = error))
+
     else:
-        return render_template("register.html")
+        error = request.args.get("error")
+        return render_template("register.html",error = error)
     
 @app.route("/logout")
 @login_required
@@ -802,7 +810,7 @@ def assign_slots():
         slots_res = cursor.fetchall()
         cursor.execute(input_class_query, input_class_para)
         input_class_res = cursor.fetchall()
-        query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM }"
+        query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM } ORDER BY ID DESC"
         cursor.execute(query)
         results = cursor.fetchall()
         return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,slots_res = slots_res, input_class_res = input_class_res,error = error)
