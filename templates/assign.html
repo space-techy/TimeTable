@@ -9,7 +9,7 @@
             <div class="mk_time">
                 <h2>Assign Theory Slots</h2>
                 <h2>{{ CURR_YEAR_SEM.upper() }}</h2>
-                <hr>
+                <hr />
             </div>
             <div class="mk_time">
                 <form action="/assign_slots" id="slot-form" method="POST">
@@ -93,11 +93,15 @@
                 <h2>Assigned Slots</h2>
                 <h2>{{ g.CURR_DEPT }} Department</h2>
                 <hr>
+                <form action="/edit_slots" method="POST">
+                    <button type="submit" id="editButton" value="()" name="slots_edit">Edit</button>
+                </form>
             </div>
             <div class="exist_table">
                 <table style="width: 100%;">
                     <thead>
                         <tr>
+                            <th>Click Update</th>
                             <th>Class</th>
                             <th>Subject</th>
                             <th>Slot</th>
@@ -115,14 +119,18 @@
                         <!-- Placeholder row -->
                         {% for row in results %}
                             <tr>
+                                <td><input value="{{ row[0] }}" type="checkbox" name="check_box" onchange="addIdtoUpdate(this)"/></td>
                                 {% for data in row[1:] %}
                                     <td>{{ data }}</td>
                                 {% endfor %}
                                 <td>
-                                    <form action="/remove_slot" method="POST">
+                                    <div class="icons">
+                                        <form action="/remove_slot" method="POST">
                                         <input type="hidden" name="del_slot" value="{{ row[0] }}">
                                         <input type="image" src="{{url_for('static', filename='/images/delete.png')}}" class="del-icon" alt="search icon" name="delete" value="delete"/>
-                                    </form>
+                                        </form>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -136,8 +144,20 @@
 
 <script>
 
+    function addIdtoUpdate(element){
+        const editButton = document.getElementById("editButton");
+        const idToAdd = element.value;
+        if(!(editButton.value.includes(idToAdd))){
+            editButton.value = editButton.value.slice(0,-1) + idToAdd + "," +editButton.value.slice(-1); 
+        }
+        console.log(editButton.value);
+    }
+
+
+
+
     document.addEventListener("DOMContentLoaded", ()=>{
-        const class_id = document.getElementById("class")
+        const class_id = document.getElementById("class");
 
         class_id.addEventListener("change", (event)=>{
             const selected_class = event.target.value;

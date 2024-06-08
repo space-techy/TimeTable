@@ -3,6 +3,7 @@ import mysql.connector as mysql
 from flask_login import UserMixin,  login_user, logout_user, LoginManager, login_required, current_user
 from datetime import timedelta
 from user_helper import User
+from check_queries import check_data
 import openpyxl
 import ast
 import os
@@ -62,9 +63,9 @@ def login_page():
         user_login = "SELECT user_id,username,user_password,department_name FROM users WHERE username = %s AND user_password = %s"
         cursor.execute(user_login,user_info)
         result = cursor.fetchall()
-        department_name = result[0][3]
         if(len(result) > 0):
             user_log = User(result[0][1])
+            department_name = result[0][3]
             login_user(user_log)
             session["username"] = username
             session["department"] = department_name
@@ -105,8 +106,8 @@ def register_page():
             login_user(user_res)
             return redirect("/")
         except:
-            error = "User already registered!"
-            return redirect(url_for("register", error = error))
+            error = "User already registered! OR Some other error!"
+            return render_template("register.html",error = error)
 
     else:
         error = request.args.get("error")
@@ -483,7 +484,7 @@ def import_excel():
                         imp_slot = days_col[col-1] + str(row - 1)
                         imp_day = ws[days_col[col]+"1"].value
                         imp_time = ws["A"+ str(row)].value
-                        if(len(imp_div) > 0):
+                        if(len(imp_div) > 1):
                             imp_batch_col = imp_div
                             imp_div = imp_div[0]
                         else:
@@ -805,7 +806,7 @@ def assign_slots():
             error = ""
         input_class_query = "SELECT DISTINCT(class) FROM divisions WHERE department = %s"
         input_class_para = ( CURR_BRANCH, )
-        slots_para = "SELECT slots_name,slot_time_day FROM time_slots"
+        slots_para = "SELECT slots_name,slot_time_day FROM time_slots ORDER BY id ASC"
         cursor.execute(slots_para)
         slots_res = cursor.fetchall()
         cursor.execute(input_class_query, input_class_para)
@@ -1123,3 +1124,38 @@ def show_timetable():
     
 
 
+@app.route("/edit_slots", methods = ["POST",])
+@login_required
+def edit_slots():
+    slots_to_edit = request.form.get("slots_edit")
+    if(slots_to_edit == "()"):
+        return redirect("/assign_slots")
+    slots_id = ast.literal_eval(slots_to_edit)
+    slots_info = []
+    slot_query = f"SELECT * FROM { CURR_YEAR_SEM } WHERE id = %s"
+    for slot_id in slots_id:
+        cursor.execute( slot_query, (slot_id,))
+        info_res = cursor.fetchall()[0]
+        slots_info.append(info_res)
+    
+    input_class_query = "SELECT DISTINCT(class) FROM divisions WHERE department = %s"
+    input_class_para = ( CURR_BRANCH, )
+    slots_para = "SELECT slots_name,slot_time_day FROM time_slots ORDER BY id ASC"
+    cursor.execute(slots_para)
+    slots_res = cursor.fetchall()
+    cursor.execute(input_class_query, input_class_para)
+    input_class_res = cursor.fetchall()
+    query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM } ORDER BY ID DESC"
+    cursor.execute(query)
+    results = cursor.fetchall()
+    return render_template("edit_slots.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,slots_res = slots_res, input_class_res = input_class_res,slots = slots_info)
+
+
+@app.route("/change_slots", methods = ["POST",])
+@login_required
+def change_slots():
+    batch_bef = request.form.getlist("batch_bef")
+    batch = request.form.getlist("batch")
+    print(batch_bef)
+    print("Here batch",batch)
+    return redirect(url_for("assign_slots",error = "Successfully Changed the data!"))

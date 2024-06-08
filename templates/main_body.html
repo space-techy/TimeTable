@@ -30,7 +30,10 @@
                                 <option value="EVEN">EVEN</option>
                             </select>
                         </div>
-                        <button type="submit" class="submit-btn mt-3" {{ isDisabled }}>Create</button>
+                        <button type="submit" {% if (not isDisabled) %}
+                            {% set class_bro="class = 'submit-btn mt-3'" %}
+                            {{class_bro}}
+                        {% endif %} {{ isDisabled }}>Create</button>
                     </form>
                 </div>
             </div>

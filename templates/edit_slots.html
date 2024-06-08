@@ -1,0 +1,205 @@
+{% extends "index.html" %}
+
+
+{% block content %}
+
+    <div class="container text-center">
+        <div class="grid-table">
+            <div class="col-12 col-md-6 py-5 form-container create-div">
+                <p>{{ error }}</p>
+                <div class="mk_time">
+                    <h2>Change Slots</h2>
+                    <hr />
+                </div>
+                <div class="exist_table">
+                    <div class="exist_table">
+                        <form action="/change_slots" method="POST">
+                            <table style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>Id</th>
+                                        <th>Class</th>
+                                        <th>Division</th>
+                                        <th>Batch</th>
+                                        <th>Subject</th>
+                                        <th>Slot</th>
+                                        <th>Faculty</th>
+                                        <th>Room</th>
+                                        <th>Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for slot in slots %}
+                                        <tr>
+                                            <td>
+                                            <input type="text" name="slot_id_curr" value="{{ slot[0] }}" hidden>
+                                            {{ slot[0] }}</td>
+                                            <td>
+                                                <label>{{ slot[1] }}</label>
+                                                <input type="text" name="class_bef" value="{{ slot[1] }}" hidden>
+                                                <select class="class-select" name="class">
+                                                    <option selected value="">Select Class</option>
+                                                    {% for clas in input_class_res %}
+                                                        <option value="{{ clas[0] }}">{{ clas[0] }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <label>{{ slot[11] }}</label>
+                                                <input type="text" name="division_bef" value="{{ slot[11] }}" hidden>
+                                                <select class="division-select" name="division">
+                                                    <option selected value="">Select Division</option>
+                                                    <!-- Add other division options here -->
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <label>{{ slot[8] }}</label>
+                                                <input type="text" name="batch_bef" value="{{ slot[8] }}" hidden>
+                                                <select class="batch-select" name="batch">
+                                                    <option selected value="">Select Batch</option>
+                                                    <!-- Add other batch options here -->
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <label>{{ slot[2] }}</label>
+                                                <input type="text" name="subject_bef" value="{{ slot[2] }}" hidden>
+                                                <select class="subject-select" name="subject">
+                                                    <option selected value="">Select Subject</option>
+                                                    <!-- Add other subject options here -->
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <label>{{ slot[3] }}</label>
+                                                <input type="text" name="slots_bef" value="{{ slot[3] }}" hidden>
+                                                <select class="slots-select" name="slot">
+                                                    {% for slot_s in slots_res %}
+                                                        <option value="{{ slot_s[0] }}">{{ slot_s[1] }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <label>{{ slot[6] }}</label>
+                                                <input type="text" name="faculty_bef" value="{{slot[6]}}" hidden>
+                                                <select class="faculty-select" name="faculty">
+                                                    <option selected value="">Select Faculty</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <label>{{ slot[7] }}</label>
+                                                <input type="text" name="room_bef" value="{{ slot[7] }}" hidden>
+                                                <select class="room-select" name="room">
+                                                    <option selected value="">Select Room</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <label>{{ slot[9] }}</label>
+                                                <input type="text" name="sub_type_bef" value="{{ slot[9] }}" hidden>
+                                                <br />
+                                                <input type="text" name="sub_type" value="{{ slot[9] }}" style="width: 75px;" />
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <button type="submit">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+
+
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll('.class-select').forEach(classSelect => {
+            classSelect.addEventListener('change', (event) => {
+                const selectedClass = event.target.value;
+                const row = event.target.closest('tr');
+
+                const selJson = {
+                    sel_class: selectedClass
+                };
+
+                fetch("/get_div", {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(selJson)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const division = row.querySelector('.division-select');
+                    const subject = row.querySelector('.subject-select');
+                    const room = row.querySelector('.room-select');
+                    const faculty = row.querySelector('.faculty-select');
+                    const batch = row.querySelector('.batch-select');
+
+                    const divRes = data.divisions;
+                    const subRes = data.subjects;
+                    const roomRes = data.rooms;
+                    const facRes = data.faculty;
+
+                    // Clear previous options
+                    division.innerHTML = '<option selected value="">Select Division</option>';
+                    subject.innerHTML = '<option selected value="">Select Subject</option>';
+                    room.innerHTML = '<option selected value="">Select Room</option>';
+                    faculty.innerHTML = '<option selected value="">Select Faculty</option>';
+                    batch.innerHTML = '<option selected value="">Select Batch</option>';
+
+                    divRes.forEach((div) => {
+                        const newOption = document.createElement("option");
+                        newOption.text = div[0];
+                        newOption.value = div[0];
+                        division.appendChild(newOption);
+                    });
+
+                    division.addEventListener("change", (event) => {
+                        const selBatch = event.target.value;
+                        batch.innerHTML = '<option selected value="">Select Batch</option>';
+                        divRes.forEach((div) => {
+                            if (selBatch === div[0]) {
+                                for (let k = 0; k < div[1]; k++) {
+                                    const curBatch = div[0] + String(k + 1);
+                                    const newOption = document.createElement("option");
+                                    newOption.text = curBatch;
+                                    newOption.value = curBatch;
+                                    batch.appendChild(newOption);
+                                }
+                            }
+                        });
+                    });
+
+                    subRes.forEach((sub) => {
+                        const newOption = document.createElement("option");
+                        newOption.text = sub;
+                        subject.appendChild(newOption);
+                    });
+
+                    roomRes.forEach((rooma) => {
+                        const newOption = document.createElement("option");
+                        newOption.text = rooma;
+                        room.appendChild(newOption);
+                    });
+
+                    facRes.forEach((fac) => {
+                        const newOption = document.createElement("option");
+                        newOption.text = fac;
+                        faculty.appendChild(newOption);
+                    });
+
+                });
+            });
+        });
+    });
+
+
+</script>
+
+
+
+
+{% endblock content %}
+
