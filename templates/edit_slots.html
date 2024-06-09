@@ -57,6 +57,7 @@
                                                 <input type="text" name="batch_bef" value="{{ slot[8] }}" hidden>
                                                 <select class="batch-select" name="batch">
                                                     <option selected value="">Select Batch</option>
+                                                    <option value="NO">NO</option>
                                                     <!-- Add other batch options here -->
                                                 </select>
                                             </td>
@@ -72,6 +73,7 @@
                                                 <label>{{ slot[3] }}</label>
                                                 <input type="text" name="slots_bef" value="{{ slot[3] }}" hidden>
                                                 <select class="slots-select" name="slot">
+                                                    <option selected value="">Select Slot</option>
                                                     {% for slot_s in slots_res %}
                                                         <option value="{{ slot_s[0] }}">{{ slot_s[1] }}</option>
                                                     {% endfor %}
@@ -93,7 +95,6 @@
                                             </td>
                                             <td>
                                                 <label>{{ slot[9] }}</label>
-                                                <input type="text" name="sub_type_bef" value="{{ slot[9] }}" hidden>
                                                 <br />
                                                 <input type="text" name="sub_type" value="{{ slot[9] }}" style="width: 75px;" />
                                             </td>
@@ -147,7 +148,7 @@
                     subject.innerHTML = '<option selected value="">Select Subject</option>';
                     room.innerHTML = '<option selected value="">Select Room</option>';
                     faculty.innerHTML = '<option selected value="">Select Faculty</option>';
-                    batch.innerHTML = '<option selected value="">Select Batch</option>';
+                    batch.innerHTML = '<option selected value="">Select Batch</option><option value="NO">NO</option>'
 
                     divRes.forEach((div) => {
                         const newOption = document.createElement("option");
@@ -158,7 +159,7 @@
 
                     division.addEventListener("change", (event) => {
                         const selBatch = event.target.value;
-                        batch.innerHTML = '<option selected value="">Select Batch</option>';
+                        batch.innerHTML = '<option selected value="">Select Batch</option><option value="NO">NO</option>'
                         divRes.forEach((div) => {
                             if (selBatch === div[0]) {
                                 for (let k = 0; k < div[1]; k++) {

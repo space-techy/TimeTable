@@ -19,7 +19,7 @@
       <form action="/show_timetable" method="POST">
         <div class="form-group d-flex align-items-center form-group-1">
           <label>Select Room:</label>
-          <select name="sel_room" class="form-select" aria-label="Default select example">
+          <select name="sel_room" class="form-select" aria-label="Default select example" onchange="showColorRoom(this)">
               <option selected disabled>Room</option>
               {% for room in room_res %}
                   <option value="{{ room[0] }}">{{ room[0] }}</option>
@@ -31,7 +31,7 @@
       <form action="/show_timetable" method="POST">
         <div class="form-group d-flex align-items-center form-group-1">
           <label>Select Faculty:</label>
-          <select name="sel_fac" class="form-select" aria-label="Default select example">
+          <select name="sel_fac" class="form-select" aria-label="Default select example" onchange="showColor()">
               <option selected disabled>Faculty</option>
               {% for faculty in fac_res %}
                   <option value="{{ faculty[0] }}">{{ faculty[0] }}</option>
@@ -61,6 +61,10 @@
       // Save the PDF
       pdf.save("Timetable.pdf");
 
+    }
+
+    function showColor(element){
+      console.log(element.value);
     }
   
   </script>

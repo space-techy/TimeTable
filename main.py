@@ -286,8 +286,8 @@ def add_faculty():
         error = request.args.get("error")
         if(error is None):
             error = ""
-        fac_query = f"SELECT * FROM faculty WHERE facdep = '{CURR_BRANCH}' OR facshdep = '{CURR_BRANCH}'"
-        cursor.execute(fac_query)
+        fac_query = f"SELECT * FROM faculty WHERE facdep = %s OR facshdep = %s"
+        cursor.execute(fac_query,(f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%"))
         faculties = cursor.fetchall()
         return render_template("add_faculty.html", error = error,faculties = faculties)
     
@@ -330,8 +330,8 @@ def add_room():
         error = request.args.get("error")
         if(error is None):
             error = ""
-        room_query = f"SELECT * FROM rooms WHERE roomdep = '{CURR_BRANCH}' OR roomshdep = '{CURR_BRANCH}'"
-        cursor.execute(room_query)
+        room_query = f"SELECT * FROM rooms WHERE roomdep = %s OR roomshdep = %s"
+        cursor.execute(room_query,(f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%"))
         rooms = cursor.fetchall()
         return render_template("add_room.html", error = error,rooms = rooms)
     
@@ -448,11 +448,11 @@ def import_excel():
                         imp_batch_col = "NO"
                     check_div_query = f"SELECT * FROM { imp_year_sem }  WHERE class = %s AND slot = %s AND batch = %s AND division = %s AND branch = %s"
                     check_all_query = f"SELECT * FROM { imp_year_sem } WHERE class = %s AND subject = %s AND slot = %s AND faculty = %s AND room = %s AND batch = %s AND branch = %s AND division = %s"
-                    check_fac_query = f"SELECT * FROM { imp_year_sem } WHERE slot = %s AND ( (faculty LIKE %s) OR (faculty LIKE %s) OR (faculty LIKE %s) OR (faculty LIKE %s))"
+                    check_fac_query = f"SELECT * FROM { imp_year_sem } WHERE slot = %s AND (faculty LIKE %s)"
                     check_room_query = f"SELECT * FROM { imp_year_sem } WHERE slot = %s AND room = %s"
                     check_div_para = ( imp_class, imp_slot,imp_batch_col, imp_div, CURR_BRANCH)
                     check_all_para = ( imp_class, imp_sub, imp_slot, imp_fac, imp_room, imp_batch_col, CURR_BRANCH, imp_div)
-                    check_fac_para = ( imp_slot, f"{imp_fac}", f"%/{imp_fac}",f"{imp_fac}/%",f"%/{imp_fac}/%")
+                    check_fac_para = ( imp_slot, f"%{imp_fac}%")
                     check_room_para = ( imp_slot, imp_room)
                     cursor.execute(check_div_query,check_div_para)
                     check_div_res = cursor.fetchall()
@@ -491,11 +491,11 @@ def import_excel():
                             imp_batch_col = "NO"
                         check_div_query = f"SELECT * FROM { imp_year_sem }  WHERE class = %s AND slot = %s AND batch = %s AND division = %s AND branch = %s"
                         check_all_query = f"SELECT * FROM { imp_year_sem } WHERE class = %s AND subject = %s AND slot = %s AND faculty = %s AND room = %s AND batch = %s AND branch = %s AND division = %s"
-                        check_fac_query = f"SELECT * FROM { imp_year_sem } WHERE slot = %s AND ( (faculty LIKE %s) OR (faculty LIKE %s) OR (faculty LIKE %s) OR (faculty LIKE %s))"
+                        check_fac_query = f"SELECT * FROM { imp_year_sem } WHERE slot = %s AND  (faculty LIKE %s)"
                         check_room_query = f"SELECT * FROM { imp_year_sem } WHERE slot = %s AND room = %s"
                         check_div_para = ( imp_class, imp_slot,imp_batch_col, imp_div, CURR_BRANCH)
                         check_all_para = ( imp_class, imp_sub, imp_slot, imp_fac, imp_room, imp_batch_col, CURR_BRANCH,imp_div)
-                        check_fac_para = ( imp_slot, f"{imp_fac}", f"%/{imp_fac}",f"{imp_fac}/%",f"%/{imp_fac}/%")
+                        check_fac_para = ( imp_slot, f"%{imp_fac}%")
                         check_room_para = ( imp_slot, imp_room)
                         cursor.execute(check_div_query,check_div_para)
                         check_div_res = cursor.fetchall()
@@ -534,15 +534,15 @@ def get_div():
         sel_class = sel_class["sel_class"]
         sub_query = f"SELECT subabb FROM subjects WHERE subclass = %s AND subsem = %s"
         div_query = f"SELECT batch,no_of_div FROM divisions WHERE class = %s"
-        room_query = f"SELECT roomno FROM rooms WHERE roomdep = %s OR roomshdep = %s"
-        faculty_query = f"SELECT facinit FROM faculty WHERE facdep = %s OR facshdep = %s"
+        room_query = f"SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
+        faculty_query = f"SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
         if(CURR_YEAR_SEM[0] == "O"):
             subsem = "ODD"
         else:
             subsem = "EVEN"
         sub_para = (sel_class, subsem)
         div_para = (sel_class,)
-        room_fac_para = (CURR_BRANCH,CURR_BRANCH)
+        room_fac_para = (f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%")
         cursor.execute(sub_query,sub_para)
         sub_res = cursor.fetchall()
         cursor.execute(div_query,div_para)
@@ -621,8 +621,8 @@ def assign_slots():
             if(len(slots) > 1):
                 for curr_fac in fac_list:
                     for slot in slots:
-                        fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND ((faculty  LIKE  %s) OR (faculty  LIKE  %s) OR (faculty  LIKE  %s))"
-                        fac_para = (slots[0],f"%/{curr_fac}/%",f"%{curr_fac}/%",f"%/{curr_fac}%")
+                        fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND (faculty  LIKE  %s)"
+                        fac_para = (slots[0],f"%{curr_fac}%")
                         cursor.execute(fac_query,fac_para)
                         fac_res = cursor.fetchall()
                         if(len(fac_res >= 1)):
@@ -647,8 +647,8 @@ def assign_slots():
                             return redirect(url_for("assign_slots", error = errorin))
             else:
                 for curr_fac in fac_list:
-                    fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND ((faculty  LIKE  %s) OR (faculty  LIKE  %s) OR (faculty  LIKE  %s))"
-                    fac_para = (slots[0],f"%/{curr_fac}/%",f"%{curr_fac}/%",f"%/{curr_fac}%")
+                    fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND (faculty  LIKE  %s)"
+                    fac_para = (slots[0],f"%{curr_fac}%")
                     cursor.execute(fac_query,fac_para)
                     fac_res = cursor.fetchall()
                     if(len(fac_res) >= 1):
@@ -921,10 +921,10 @@ def show_timetable():
             table_body = table_body + "</tbody>"
             complete_table = table_head + table_body
             class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
-            room_query = "SELECT roomno FROM rooms WHERE roomdep = %s OR roomshdep = %s"
-            fac_query = "SELECT facinit FROM faculty WHERE facdep = %s OR facshdep = %s"
+            room_query = "SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
+            fac_query = "SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
             class_para = (CURR_BRANCH,)
-            room_fac_para = (CURR_BRANCH,CURR_BRANCH)
+            room_fac_para = (f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%")
             cursor.execute(class_query, class_para)
             class_res = cursor.fetchall()
             cursor.execute(room_query, room_fac_para)
@@ -995,10 +995,10 @@ def show_timetable():
             table_body = table_body + "</tbody>"
             complete_table = table_head + table_body
             class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
-            room_query = "SELECT roomno FROM rooms WHERE roomdep = %s OR roomshdep = %s"
-            fac_query = "SELECT facinit FROM faculty WHERE facdep = %s OR facshdep = %s"
+            room_query = "SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
+            fac_query = "SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
             class_para = (CURR_BRANCH,)
-            room_fac_para = (CURR_BRANCH,CURR_BRANCH)
+            room_fac_para = (f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%")
             cursor.execute(class_query, class_para)
             class_res = cursor.fetchall()
             cursor.execute(room_query, room_fac_para)
@@ -1026,13 +1026,13 @@ def show_timetable():
                     if(time_slots[t] in check_back_row.keys()):
                         if(day in check_back_row[time_slots[t]]):
                             continue
-                    time_query = f"SELECT class,subject,room,division,batch FROM  { CURR_YEAR_SEM } WHERE faculty = %s AND day = %s AND time = %s AND branch = %s"
-                    curr_time_para = ( sel_fac, day, time_slots[t], CURR_BRANCH)
+                    time_query = f"SELECT class,subject,room,division,batch FROM  { CURR_YEAR_SEM } WHERE faculty LIKE %s AND day = %s AND time = %s AND branch = %s"
+                    curr_time_para = ( f"%{sel_fac}%", day, time_slots[t], CURR_BRANCH)
                     cursor.execute(time_query,curr_time_para)
                     curr_time_res = cursor.fetchall()
                     curr_time_res = sorted(curr_time_res)
                     if((t+1) != len(time_slots)):
-                        next_time_para = ( sel_fac, day, time_slots[t+1], CURR_BRANCH)
+                        next_time_para = ( f"%{sel_fac}%", day, time_slots[t+1], CURR_BRANCH)
                         cursor.execute(time_query, next_time_para)
                         next_time_res = cursor.fetchall()
                         next_time_res = sorted(next_time_res)
@@ -1070,10 +1070,10 @@ def show_timetable():
             table_body = table_body + "</tbody>"
             complete_table = table_head + table_body
             class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
-            room_query = "SELECT roomno FROM rooms WHERE roomdep = %s OR roomshdep = %s"
-            fac_query = "SELECT facinit FROM faculty WHERE facdep = %s OR facshdep = %s"
+            room_query = "SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
+            fac_query = "SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
             class_para = (CURR_BRANCH,)
-            room_fac_para = (CURR_BRANCH,CURR_BRANCH)
+            room_fac_para = (f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%")
             cursor.execute(class_query, class_para)
             class_res = cursor.fetchall()
             cursor.execute(room_query, room_fac_para)
@@ -1097,10 +1097,10 @@ def show_timetable():
             fac_load = f"Theory: {lec_load} Tutorial: {tut_load} Practical: {prac_load} Total Load: {total_load}"
             return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, class_res = class_res, room_res = room_res, fac_res = fac_res,infoImpo = show_faculty,fac_load = fac_load,timetable = complete_table)
         class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
-        room_query = "SELECT roomno FROM rooms WHERE roomdep = %s OR roomshdep = %s"
-        fac_query = "SELECT facinit FROM faculty WHERE facdep = %s OR facshdep = %s"
+        room_query = "SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
+        fac_query = "SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
         class_para = (CURR_BRANCH,)
-        room_fac_para = (CURR_BRANCH,CURR_BRANCH)
+        room_fac_para = (f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%")
         cursor.execute(class_query, class_para)
         class_res = cursor.fetchall()
         cursor.execute(room_query, room_fac_para)
@@ -1124,38 +1124,277 @@ def show_timetable():
     
 
 
-@app.route("/edit_slots", methods = ["POST",])
+@app.route("/edit_slots", methods = ["GET","POST"])
 @login_required
 def edit_slots():
-    slots_to_edit = request.form.get("slots_edit")
-    if(slots_to_edit == "()"):
-        return redirect("/assign_slots")
-    slots_id = ast.literal_eval(slots_to_edit)
-    slots_info = []
-    slot_query = f"SELECT * FROM { CURR_YEAR_SEM } WHERE id = %s"
-    for slot_id in slots_id:
-        cursor.execute( slot_query, (slot_id,))
-        info_res = cursor.fetchall()[0]
-        slots_info.append(info_res)
-    
-    input_class_query = "SELECT DISTINCT(class) FROM divisions WHERE department = %s"
-    input_class_para = ( CURR_BRANCH, )
-    slots_para = "SELECT slots_name,slot_time_day FROM time_slots ORDER BY id ASC"
-    cursor.execute(slots_para)
-    slots_res = cursor.fetchall()
-    cursor.execute(input_class_query, input_class_para)
-    input_class_res = cursor.fetchall()
-    query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM } ORDER BY ID DESC"
-    cursor.execute(query)
-    results = cursor.fetchall()
-    return render_template("edit_slots.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,slots_res = slots_res, input_class_res = input_class_res,slots = slots_info)
-
+    if request.method == "POST":
+        slots_to_edit = request.form.get("slots_edit")
+        if(slots_to_edit == "()"):
+            return redirect("/assign_slots")
+        slots_id = ast.literal_eval(slots_to_edit)
+        slots_info = []
+        slot_query = f"SELECT * FROM { CURR_YEAR_SEM } WHERE id = %s"
+        for slot_id in slots_id:
+            cursor.execute( slot_query, (slot_id,))
+            info_res = cursor.fetchall()[0]
+            slots_info.append(info_res)
+        input_class_query = "SELECT DISTINCT(class) FROM divisions WHERE department = %s"
+        input_class_para = ( CURR_BRANCH, )
+        slots_para = "SELECT slots_name,slot_time_day FROM time_slots ORDER BY id ASC"
+        cursor.execute(slots_para)
+        slots_res = cursor.fetchall()
+        cursor.execute(input_class_query, input_class_para)
+        input_class_res = cursor.fetchall()
+        query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM } ORDER BY ID DESC"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        return render_template("edit_slots.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,slots_res = slots_res, input_class_res = input_class_res,slots = slots_info)
+    else:
+        error = request.args.get("error")
+        slots_to_edit = request.args.getlist("slots_edit")
+        if(slots_to_edit == "()"):
+            return redirect("/assign_slots")
+        slots_id = slots_to_edit
+        slots_info = []
+        slot_query = f"SELECT * FROM { CURR_YEAR_SEM } WHERE id = %s"
+        for slot_id in slots_id:
+            cursor.execute( slot_query, (slot_id,))
+            info_res = cursor.fetchall()
+            info_res = info_res[0]
+            slots_info.append(info_res)
+        input_class_query = "SELECT DISTINCT(class) FROM divisions WHERE department = %s"
+        input_class_para = ( CURR_BRANCH, )
+        slots_para = "SELECT slots_name,slot_time_day FROM time_slots ORDER BY id ASC"
+        cursor.execute(slots_para)
+        slots_res = cursor.fetchall()
+        cursor.execute(input_class_query, input_class_para)
+        input_class_res = cursor.fetchall()
+        query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM } ORDER BY ID DESC"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        return render_template("edit_slots.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,slots_res = slots_res, input_class_res = input_class_res,slots = slots_info,error = error)
 
 @app.route("/change_slots", methods = ["POST",])
 @login_required
 def change_slots():
-    batch_bef = request.form.getlist("batch_bef")
-    batch = request.form.getlist("batch")
-    print(batch_bef)
-    print("Here batch",batch)
+    cursor.execute("DELETE FROM temp_data")
+    conn.commit()
+    error = ""
+    slot_id = request.form.getlist("slot_id_curr")
+    copy_data = "INSERT INTO temp_data (SELECT * FROM even_2023_2024 WHERE id = %s)"
+    for slot_part in slot_id:
+        cursor.execute(copy_data,(slot_part,))
+    for curr_row in range(len(slot_id)):
+        check_update_double = {}
+        slots_changed = {}
+        curr_slot_id = slot_id[curr_row]
+        slot_class = request.form.getlist("class")[curr_row] or request.form.getlist("class_bef")[curr_row]
+        slot_div = request.form.getlist("division")[curr_row] or request.form.getlist("division_bef")[curr_row]
+        slot_batch = request.form.getlist("batch")[curr_row] or request.form.getlist("batch_bef")[curr_row]
+        slot_sub = request.form.getlist("subject")[curr_row] or request.form.getlist("subject_bef")[curr_row]
+        slot_fac = request.form.getlist("faculty")[curr_row] or request.form.getlist("faculty_bef")[curr_row]
+        slot_room = request.form.getlist("room")[curr_row] or request.form.getlist("room_bef")[curr_row]
+        slot_slot = request.form.getlist("slot")[curr_row] or request.form.getlist("slots_bef")[curr_row]
+
+
+        slot_sub_type = request.form.getlist("sub_type")[curr_row]
+        get_time_slot = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+        cursor.execute( get_time_slot, ( slot_slot,))
+        time_res = cursor.fetchall()[0]
+
+        
+        change_class= False
+        change_div = False
+        change_batch = False
+        change_slot = False
+        change_fac = False
+        change_room = False
+        
+        if(request.form.getlist("class")[curr_row] != request.form.getlist("class_bef")[curr_row] and (request.form.getlist("class")[curr_row] != "")):
+            change_class = True
+
+        if(request.form.getlist("division")[curr_row] != request.form.getlist("division_bef")[curr_row] and (request.form.getlist("division")[curr_row] != "")):
+            change_div = True
+
+        if((request.form.getlist("batch")[curr_row] != request.form.getlist("batch_bef")[curr_row])and (request.form.getlist("batch")[curr_row] != "")):
+            change_batch = True
+
+        if( (request.form.getlist("faculty")[curr_row] != request.form.getlist("faculty_bef")[curr_row]) and (request.form.getlist("faculty")[curr_row] != "")):
+            change_fac = True
+
+        if((request.form.getlist("room")[curr_row] != request.form.getlist("room_bef")[curr_row] ) and (request.form.getlist("room")[curr_row] != "")):
+            change_room = True
+
+        if((request.form.getlist("slot")[curr_row] != request.form.getlist("slot")[curr_row] ) and (request.form.getlist("slot")[curr_row] != "")):
+            change_slot
+                
+
+        if((not change_class) and (not change_div) and (not change_batch) and (not change_fac) and (not change_room) and (change_slot)):
+            all_para = ( slot_class, slot_sub, slot_slot, slot_fac, slot_room, slot_batch, CURR_BRANCH, slot_div)
+            all_res = check_data( CURR_YEAR_SEM, all_para=all_para)
+            if(all_res):
+                error = "Slot cannot be changed as it already has been assigned for some other slot!"
+                return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+            else:
+                update_slot_query = f"UPDATE { CURR_YEAR_SEM } SET class = %s, division = %s ,batch = %s, subject = %s, faculty = %s, room = %s, slot = %s, day = %s, time = %s, type = %s WHERE id = %s"
+                update_slot_para = ( slot_class, slot_div, slot_batch, slot_sub, slot_fac, slot_room, slot_slot,time_res[0],time_res[1],slot_sub_type, curr_slot_id)
+                try:
+                    print("Faculty here or not",slot_fac)
+                    cursor.execute(update_slot_query, update_slot_para)
+                except mysql.Error as error:
+                    conn.rollback()
+                    return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+        
+
+        if(len(slot_id) > 1):
+            for check_slot in range(len(slot_id)):
+                if(curr_row == check_slot):
+                    continue
+                check_curr_slot_id = slot_id[check_slot]
+
+
+                if(change_fac):
+                    check_slot_query = f"SELECT * FROM temp_data WHERE id = %s AND faculty = %s AND branch = %s"
+                    check_slot_para = ( check_curr_slot_id, slot_fac, CURR_BRANCH)
+                    cursor.execute(check_slot_query, check_slot_para)
+                    check_slot_res = cursor.fetchall()
+                    if(len(check_slot_res) >= 1):
+                        if(check_curr_slot_id in check_update_double):
+                            conn.rollback()
+                            error = f"In edit two or more ids this ({check_update_double}) tried to have same value for id {check_curr_slot_id}"
+                            return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+                        update_slot_query = f"UPDATE { CURR_YEAR_SEM } SET faculty = %s WHERE id = %s"
+                        update_slot_para = (slot_fac,curr_slot_id)
+                        try:
+                            cursor.execute(update_slot_query, update_slot_para)
+                        except mysql.Error as error:
+                            conn.rollback()
+                            return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+                        check_update_double[check_curr_slot_id] = curr_slot_id
+                        slots_changed[curr_slot_id] = 1
+
+
+                if(change_room):
+                    check_slot_query = f"SELECT * FROM temp_data WHERE id = %s AND room = %s AND branch = %s"
+                    check_slot_para = ( check_curr_slot_id, slot_room, CURR_BRANCH)
+                    cursor.execute(check_slot_query, check_slot_para)
+                    check_slot_res = cursor.fetchall()
+                    if(len(check_slot_res) >= 1):
+                        if(check_curr_slot_id in check_update_double):
+                            print("Failed to goback")
+                            conn.rollback()
+                            error = f"In edit two or more ids this ({check_update_double}) tried to have same value for id {check_curr_slot_id}"
+                            return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+                        update_slot_query = f"UPDATE { CURR_YEAR_SEM } SET room = %s WHERE id = %s"
+                        update_slot_para = (slot_room,curr_slot_id)
+                        print("Room update Slot : ",update_slot_para)
+                        try:
+                            print("Succesfull update",update_slot_para)
+                            cursor.execute(update_slot_query, update_slot_para)
+                        except mysql.Error as error:
+                            conn.rollback()
+                            return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+                        check_update_double[check_curr_slot_id] = curr_slot_id
+                        slots_changed[curr_slot_id] = 1
+
+                check_slot_para = ( check_curr_slot_id, slot_class, slot_div, slot_batch, slot_sub, slot_fac, slot_room, slot_slot,slot_sub_type, CURR_BRANCH)
+                check_slot_query = f"SELECT * FROM temp_data WHERE id = %s AND class = %s AND division = %s AND batch = %s AND subject = %s AND faculty = %s AND room = %s AND slot = %s AND type = %s AND branch = %s"
+                cursor.execute(check_slot_query, check_slot_para)
+                check_slot_res = cursor.fetchall()
+                if(len(check_slot_res) >= 1):
+                    if(check_curr_slot_id in check_update_double):
+                        conn.rollback()
+                        error = f"In edit two or more ids this ({check_update_double}) tried to have same value for id {check_curr_slot_id}"
+                        return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+                    update_slot_query = f"UPDATE { CURR_YEAR_SEM } SET class = %s, division = %s ,batch = %s, subject = %s, faculty = %s, room = %s, slot = %s, day = %s, time = %s, type = %s WHERE id = %s"
+                    update_slot_para = ( slot_class, slot_div, slot_batch, slot_sub, slot_fac, slot_room, slot_slot,time_res[0],time_res[1],slot_sub_type, curr_slot_id)
+                    try:
+                        cursor.execute(update_slot_query, update_slot_para)
+                    except mysql.Error as error:
+                        conn.rollback()
+                        return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+                    check_update_double[check_curr_slot_id] = curr_slot_id
+                    slots_changed[curr_slot_id] = 1
+
+            if(curr_slot_id in slots_changed):
+                continue
+            else:
+                div_para = ( slot_class, slot_slot, slot_batch, slot_div, CURR_BRANCH)
+                all_para = ( slot_class, slot_sub, slot_slot, slot_fac, slot_room, slot_batch, CURR_BRANCH, slot_div)
+                fac_para = ( slot_slot, f"%{slot_fac}%")
+                room_para = ( slot_slot, slot_room)
+                div_res = False
+                fac_res = False
+                room_res = False
+                all_res = False
+                if(((request.form.getlist("division")[curr_row] != request.form.getlist("division_bef")[curr_row]) and (request.form.getlist("division")[curr_row] != ""))):
+                    div_res = check_data( CURR_YEAR_SEM, div_para=div_para)
+                if( (request.form.getlist("faculty")[curr_row] != request.form.getlist("faculty_bef")[curr_row]) and (request.form.getlist("faculty")[curr_row] != "")):
+                    fac_res = check_data( CURR_YEAR_SEM, fac_para=fac_para)
+                if((request.form.getlist("room")[curr_row] != request.form.getlist("room_bef")[curr_row] ) and (request.form.getlist("room")[curr_row] != "")):
+                    room_res = check_data( CURR_YEAR_SEM, room_para=room_para)
+                if(div_res and room_res and fac_res):
+                    all_res = check_data( CURR_YEAR_SEM, all_para=all_para)
+                if(div_res or all_res or fac_res or room_res):
+                    conn.rollback()
+                    if(all_res):
+                        error = error + f"Duplicate Entry\n"
+                    if(div_res):
+                        error = error + f"Division or Batch {slot_batch} had already been  allotted \n"
+                    if(fac_res):
+                        error = error + f"Faculty {slot_fac} had already been allotted \n"
+                    if(room_res):
+                        error = error + f"Room {slot_room} had already been allotted \n"
+                    return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+                else:
+                    update_slot_query = f"UPDATE { CURR_YEAR_SEM } SET class = %s, division = %s ,batch = %s, subject = %s, faculty = %s, room = %s, slot = %s, day = %s, time = %s, type = %s WHERE id = %s"
+                    update_slot_para = ( slot_class, slot_div, slot_batch, slot_sub, slot_fac, slot_room, slot_slot,time_res[0],time_res[1],slot_sub_type, curr_slot_id)
+                    try:
+                        cursor.execute(update_slot_query, update_slot_para)
+                    except mysql.Error as error:
+                        conn.rollback()
+                        return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+        elif(len(slot_id) == 1):
+            div_para = ( slot_class, slot_slot, slot_batch, slot_div, CURR_BRANCH)
+            all_para = ( slot_class, slot_sub, slot_slot, slot_fac, slot_room, slot_batch, CURR_BRANCH, slot_div)
+            fac_para = ( slot_slot, f"%{slot_fac}%")
+            room_para = ( slot_slot, slot_room)
+            div_res = False
+            fac_res = False
+            room_res = False
+            all_res = False
+            if(((request.form.getlist("division")[curr_row] != request.form.getlist("division_bef")[curr_row]) and (request.form.getlist("division")[curr_row] != ""))):
+                div_res = check_data( CURR_YEAR_SEM, div_para=div_para)
+            if( (request.form.getlist("faculty")[curr_row] != request.form.getlist("faculty_bef")[curr_row]) and (request.form.getlist("faculty")[curr_row] != "")):
+                fac_res = check_data( CURR_YEAR_SEM, fac_para=fac_para)
+            if((request.form.getlist("room")[curr_row] != request.form.getlist("room_bef")[curr_row] ) and (request.form.getlist("room")[curr_row] != "")):
+                room_res = check_data( CURR_YEAR_SEM, room_para=room_para)
+            if(div_res and room_res and fac_res):
+                all_res = check_data( CURR_YEAR_SEM, all_para=all_para)
+            if(div_res or all_res or fac_res or room_res):
+                conn.rollback()
+                if(all_res):
+                    error = error + f"Duplicate Entry \n"
+                if(div_res):
+                    error = error + f"Division or Batch {slot_batch} had already been  allotted \n"
+                if(fac_res):
+                    error = error + f"Faculty {slot_fac} had already been allotted \n"
+                if(room_res):
+                    error = error + f"Room {slot_room} had already been allotted \n"
+                return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+            else:
+                print("Direct to update")
+                update_slot_query = f"UPDATE { CURR_YEAR_SEM } SET class = %s, division = %s ,batch = %s, subject = %s, faculty = %s, room = %s, slot = %s, day = %s, time = %s, type = %s WHERE id = %s"
+                update_slot_para = ( slot_class, slot_div, slot_batch, slot_sub, slot_fac, slot_room, slot_slot,time_res[0],time_res[1],slot_sub_type, curr_slot_id)
+                try:
+                    cursor.execute(update_slot_query, update_slot_para)
+                except mysql.Error as error:
+                    conn.rollback()
+                    return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+            
+        else:
+            error = "Some other unencountered error occured! Please go back to home page"
+            return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+        cursor.execute("DELETE FROM temp_data")
+        conn.commit()
     return redirect(url_for("assign_slots",error = "Successfully Changed the data!"))

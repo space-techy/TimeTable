@@ -149,6 +149,8 @@
         const idToAdd = element.value;
         if(!(editButton.value.includes(idToAdd))){
             editButton.value = editButton.value.slice(0,-1) + idToAdd + "," +editButton.value.slice(-1); 
+        } else {
+            editButton.value = editButton.value.replace(idToAdd+",", "");
         }
         console.log(editButton.value);
     }
