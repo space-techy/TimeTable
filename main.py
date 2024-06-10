@@ -34,6 +34,7 @@ config = {
     'database': "KJSCE_Timetable",
 }
 
+
 #This is for connecting MySQL connector to python
 conn = mysql.connect(**config)
 cursor = conn.cursor()
@@ -72,6 +73,9 @@ def login_page():
             session.permanent = True
             app.permanent_session_lifetime = timedelta(minutes=30)
             return redirect("/")
+        elif(len(result) == 0):
+            error = "User not registered"
+            return redirect(url_for("login",error = error))
         else:
             error = "User or Password wrong!"
             return redirect(url_for("login",error = error))
@@ -227,15 +231,15 @@ def add_subject():
         subT = request.form.get("total_t")
         subP = request.form.get("total_p")
         subEelective = request.form.get("elective")
-        subInfo = (sub_class, sub_sem, sub_code, sub_abb, sub_name, subL, subT, subP, subEelective,)
-        subQuery = "INSERT INTO subjects( subclass, subsem, subcode, subabb, subname, sublecture, subtut, subprac, subelective) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        subInfo = (sub_class, sub_sem, sub_code, sub_abb, sub_name, subL, subT, subP, subEelective,CURR_BRANCH)
+        subQuery = "INSERT INTO subjects( subclass, subsem, subcode, subabb, subname, sublecture, subtut, subprac, subelective,subdep) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        print(subQuery,"\n",subInfo)
         try:
             cursor.execute(subQuery, subInfo)
             conn.commit()
             return redirect("/add_subjects")
-        except:
-            error = "Subjects Already Exists or Given Data is wrong!"
-            return redirect(url_for("add_subjects", error = error))
+        except mysql.Error as error:
+            return redirect(url_for("add_subject", error = error))
     else:
         error = request.args.get("error")
         if(error is None):
@@ -534,24 +538,22 @@ def get_div():
         sel_class = sel_class["sel_class"]
         sub_query = f"SELECT subabb FROM subjects WHERE subclass = %s AND subsem = %s"
         div_query = f"SELECT batch,no_of_div FROM divisions WHERE class = %s"
-        room_query = f"SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
-        faculty_query = f"SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
+        room_query = f"SELECT roomno FROM rooms"
+        faculty_query = f"SELECT facinit FROM faculty"
         if(CURR_YEAR_SEM[0] == "O"):
             subsem = "ODD"
         else:
             subsem = "EVEN"
         sub_para = (sel_class, subsem)
         div_para = (sel_class,)
-        room_fac_para = (f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%")
         cursor.execute(sub_query,sub_para)
         sub_res = cursor.fetchall()
         cursor.execute(div_query,div_para)
         div_res = cursor.fetchall()
-        cursor.execute(room_query,room_fac_para)
+        cursor.execute(room_query)
         room_res = cursor.fetchall()
-        cursor.execute(faculty_query,room_fac_para)
+        cursor.execute(faculty_query)
         faculty_res = cursor.fetchall()
-
         # This is to send back the data
         send_results = {
             "subjects" : sub_res,
@@ -1132,6 +1134,9 @@ def edit_slots():
         if(slots_to_edit == "()"):
             return redirect("/assign_slots")
         slots_id = ast.literal_eval(slots_to_edit)
+        if(len(slots_id) > 2):
+            error = "Only 2 slots can be edited at a time!"
+            return redirect(url_for("assign_slots",error = error))
         slots_info = []
         slot_query = f"SELECT * FROM { CURR_YEAR_SEM } WHERE id = %s"
         for slot_id in slots_id:
@@ -1249,15 +1254,22 @@ def change_slots():
 
         if(len(slot_id) > 1):
             for check_slot in range(len(slot_id)):
+                change_room_fac_don = False
                 if(curr_row == check_slot):
                     continue
                 check_curr_slot_id = slot_id[check_slot]
 
-
+                if(change_div or change_batch):
+                    div_para = ( slot_class, slot_slot, slot_batch, slot_div, CURR_BRANCH)
+                    div_res = check_data(CURR_YEAR_SEM, div_para= div_para)
+                    if(div_res):
+                        conn.rollback()
+                        error = error + f"Division or Batch {slot_batch} had already been  allotted \n"
+                        return redirect(url_for("edit_slots", error = error, slots_edit = slot_id))
 
                 if(change_fac and change_room):
-                    check_slot_query = f"SELECT * FROM temp_data WHERE id = %s AND faculty = %s OR room = %s AND branch = %s"
-                    check_slot_para = ( check_curr_slot_id, slot_fac, slot_room,CURR_BRANCH)
+                    check_slot_query = f"SELECT * FROM temp_data WHERE id = %s AND faculty = %s OR room = %s"
+                    check_slot_para = ( check_curr_slot_id, slot_fac, slot_room)
                     cursor.execute(check_slot_query, check_slot_para)
                     check_slot_res = cursor.fetchall()
                     if(len(check_slot_res) >= 1):
@@ -1274,14 +1286,15 @@ def change_slots():
                             return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
                         check_update_double[check_curr_slot_id] = curr_slot_id
                         slots_changed[curr_slot_id] = 1
-                    break
+                        change_room_fac_don =  True
 
-                if(change_fac):
-                    check_slot_query = f"SELECT * FROM temp_data WHERE id = %s AND faculty = %s AND branch = %s"
-                    check_slot_para = ( check_curr_slot_id, slot_fac, CURR_BRANCH)
+                if(change_fac and not change_room_fac_don):
+               
+                    check_slot_query = f"SELECT * FROM temp_data WHERE id = %s AND faculty = %s"
+                    check_slot_para = ( check_curr_slot_id, slot_fac)
                     cursor.execute(check_slot_query, check_slot_para)
                     check_slot_res = cursor.fetchall()
-                    if(len(check_slot_res) >= 1):
+                    if(len(check_slot_res) == 1):
                         if(check_curr_slot_id in check_update_double):
                             conn.rollback()
                             error = f"In edit two or more ids this ({check_update_double}) tried to have same value for id {check_curr_slot_id}"
@@ -1295,15 +1308,21 @@ def change_slots():
                             return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
                         check_update_double[check_curr_slot_id] = curr_slot_id
                         slots_changed[curr_slot_id] = 1
+                    else:
+                        fac_para = ( slot_slot, f"%{slot_fac}%")
+                        fac_res = check_data(CURR_YEAR_SEM,fac_para= fac_para)
+                        if(fac_res):
+                            error = error + f"Faculty {slot_fac} had already been allotted \n"
+                            return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
 
 
+                if(change_room and not change_room_fac_don):
 
-                if(change_room):
-                    check_slot_query = f"SELECT * FROM temp_data WHERE id = %s AND room = %s AND branch = %s"
-                    check_slot_para = ( check_curr_slot_id, slot_room, CURR_BRANCH)
+                    check_slot_query = f"SELECT * FROM temp_data WHERE id = %s AND room = %s"
+                    check_slot_para = ( check_curr_slot_id, slot_room)
                     cursor.execute(check_slot_query, check_slot_para)
                     check_slot_res = cursor.fetchall()
-                    if(len(check_slot_res) >= 1):
+                    if(len(check_slot_res) == 1):
                         if(check_curr_slot_id in check_update_double):
                             print("Failed to goback")
                             conn.rollback()
@@ -1320,6 +1339,12 @@ def change_slots():
                             return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
                         check_update_double[check_curr_slot_id] = curr_slot_id
                         slots_changed[curr_slot_id] = 1
+                    else:
+                        room_para = (slot_slot, slot_room)
+                        room_res = check_data( CURR_YEAR_SEM, room_para= room_para)
+                        if(room_res):
+                            error = error + f"Room {slot_room} had already been allotted \n"
+                            return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
 
                 check_slot_para = ( check_curr_slot_id, slot_class, slot_div, slot_batch, slot_sub, slot_fac, slot_room, slot_slot,slot_sub_type, CURR_BRANCH)
                 check_slot_query = f"SELECT * FROM temp_data WHERE id = %s AND class = %s AND division = %s AND batch = %s AND subject = %s AND faculty = %s AND room = %s AND slot = %s AND type = %s AND branch = %s"
