@@ -1,6 +1,6 @@
 from flask import *
 import mysql.connector as mysql
-from flask_login import UserMixin,  login_user, logout_user, LoginManager, login_required, current_user
+from flask_login import  login_user, logout_user, LoginManager, login_required, current_user
 from datetime import timedelta
 from user_helper import User
 from check_queries import check_data
@@ -1244,6 +1244,7 @@ def change_slots():
                 except mysql.Error as error:
                     conn.rollback()
                     return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+            
         
 
         if(len(slot_id) > 1):
@@ -1252,6 +1253,28 @@ def change_slots():
                     continue
                 check_curr_slot_id = slot_id[check_slot]
 
+
+
+                if(change_fac and change_room):
+                    check_slot_query = f"SELECT * FROM temp_data WHERE id = %s AND faculty = %s OR room = %s AND branch = %s"
+                    check_slot_para = ( check_curr_slot_id, slot_fac, slot_room,CURR_BRANCH)
+                    cursor.execute(check_slot_query, check_slot_para)
+                    check_slot_res = cursor.fetchall()
+                    if(len(check_slot_res) >= 1):
+                        if(check_curr_slot_id in check_update_double):
+                            conn.rollback()
+                            error = f"In edit two or more ids this ({check_update_double}) tried to have same value for id {check_curr_slot_id}"
+                            return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+                        update_slot_query = f"UPDATE { CURR_YEAR_SEM } SET faculty = %s,room = %s WHERE id = %s"
+                        update_slot_para = (slot_fac,slot_room,curr_slot_id)
+                        try:
+                            cursor.execute(update_slot_query, update_slot_para)
+                        except mysql.Error as error:
+                            conn.rollback()
+                            return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+                        check_update_double[check_curr_slot_id] = curr_slot_id
+                        slots_changed[curr_slot_id] = 1
+                    break
 
                 if(change_fac):
                     check_slot_query = f"SELECT * FROM temp_data WHERE id = %s AND faculty = %s AND branch = %s"
@@ -1272,6 +1295,7 @@ def change_slots():
                             return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
                         check_update_double[check_curr_slot_id] = curr_slot_id
                         slots_changed[curr_slot_id] = 1
+
 
 
                 if(change_room):
