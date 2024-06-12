@@ -63,7 +63,7 @@ CREATE TABLE all_timetables(
 -- A sample sql code to make year_sem table
 
 CREATE TABLE 'You can give any name'(
-    id NOT NULL SERIAL,
+    id NOT NULL,
     class VARCHAR(250) NOT NULL,
     subject VARCHAR(500) NOT NULL,
     slot VARCHAR(50) NOT NULL,

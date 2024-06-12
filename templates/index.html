@@ -58,5 +58,48 @@
   </body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    const alreadyChanged = [];
+
+    function filterSlots(element){
+      const trows = document.getElementsByTagName("tr");
+
+      if(alreadyChanged.includes(element.name)){
+        for(let row of rows){
+          if(row.id == "TableHead"){
+            continue
+          }
+          const td = row.getElementsByTagName("td");
+          for(let dt of td){
+            if(data.innerText == element.value){
+              row.style.display = "";
+            }
+          }
+        }
+      }
+
+      for(let row of trows){
+        if(row.id == "TableHead"){
+          continue
+        }
+        if(row.style.display == "None"){
+          continue;
+        }
+        let row_pass = false
+        const tdata = row.getElementsByTagName("td");
+        for(let data of tdata){
+          if(data.innerText == element.value){
+            row_pass = true;
+            row.style.display = "";
+          }
+        }
+        if(!row_pass){
+          row.style.display = "None";
+        }
+      }
+
+    }
+    
+  </script>
 </html>
 

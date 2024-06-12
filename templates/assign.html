@@ -1,6 +1,5 @@
 {% extends "index.html" %}
 
-
 {% block content %}
 <div class="container text-center">
     <div class="grid-table">
@@ -26,7 +25,6 @@
                     <div class="form-group d-flex align-items-center">
                         <label for="division">Division :</label>
                         <select id="division" name="division" onchange="filterSlots(this)">
-                            <!-- Example Division options -->
                             <option selected disabled>Select</option>
                             <!-- Add other division options here -->
                         </select>
@@ -35,7 +33,6 @@
                     <div class="form-group d-flex align-items-center">
                         <label for="subject">Subject :</label>
                         <select id="subject" name="subject" onchange="filterSlots(this)">
-                            <!-- Example Subject options -->
                             <option selected disabled>Select</option>
                             <!-- Add other subject options here -->
                         </select>
@@ -43,13 +40,13 @@
                     </div>
                     <div class="form-group d-flex align-items-center">
                         <label for="room">Room :</label>
-                        <select id="room" name="room" onchange="filterSlots(this)">
+                        <select id="room" name="room">
                             <option selected disabled>Select</option>
                         </select>
                         <br />
                     </div>
                     <div class="form-group d-flex align-items-center">
-                        <label for="faculty" onchange="filterSlots(this)">Faculty :</label>
+                        <label for="faculty">Faculty :</label>
                         <select id="faculty" name="faculty">
                             <option selected disabled>Select</option>
                         </select>
@@ -62,8 +59,7 @@
                     </div>
                     <div class="form-group d-flex align-items-center">
                         <label for="batch">Batch :</label>
-                        <select id="batch" name="batch" onchange="filterSlots(this)">
-                            <!-- Example Batch options -->
+                        <select id="batch" name="batch">
                             <option selected disabled>Select</option>
                             <option value="NO">NO</option>
                             <!-- Add other batch options here -->
@@ -72,8 +68,7 @@
                     </div>
                     <div class="form-group d-flex align-items-center">
                         <label for="slots">Select Slots :</label>
-                        <select id="slots" name="slots" multiple style="height: 30vh;" onchange="filterSlots(this)">
-                            <!-- Example Slot options -->
+                        <select id="slots" name="slots" multiple style="height: 30vh;">
                             {% for slot in slots_res %}
                                 <option value="{{slot[0]}}">{{ slot[1] }}</option>
                             {% endfor %}
@@ -116,7 +111,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Placeholder row -->
                         {% for row in results %}
                             <tr>
                                 <td><input value="{{ row[0] }}" type="checkbox" name="check_box" onchange="addIdtoUpdate(this)"/></td>
@@ -134,7 +128,6 @@
                                 </td>
                             </tr>
                         {% endfor %}
-                        <!-- Additional rows of assigned slots will be dynamically inserted here -->
                     </tbody>
                 </table>
             </div>
@@ -143,7 +136,6 @@
 </div>
 
 <script>
-
     function addIdtoUpdate(element){
         const editButton = document.getElementById("editButton");
         const idToAdd = element.value;
@@ -155,38 +147,15 @@
         console.log(editButton.value);
     }
 
-
-
-    function filterSlots(element){
-        const trow = document.getElementsByTagName("tr");
-
-
-        for(var i = 0; i < trow.length; i++){
-            if(trow[i].id == "TableHead"){
-                continue;
-            }
-            var currTr = trow[i].innerHTML;
-            if(!(currTr.includes("<td>"+element.value+"</td>"))){
-                trow[i].hidden = true;
-            } else {
-                if(trow[i].hidden){
-                    trow[i].hidden = false;
-                }
-            }
-            
-        }
-    }
-
-
-
-    document.addEventListener("DOMContentLoaded", ()=>{
+    document.addEventListener("DOMContentLoaded", () => {
         const class_id = document.getElementById("class");
 
-        class_id.addEventListener("change", (event)=>{
+        class_id.addEventListener("change", (event) => {
             const selected_class = event.target.value;
             const sel_json = {
                 "sel_class": selected_class
-            }
+            };
+
             fetch("/get_div", {
                 method: "POST",
                 headers: {
@@ -194,7 +163,7 @@
                 },
                 body: JSON.stringify(sel_json)
             })
-            .then(response => response.json() )
+            .then(response => response.json())
             .then(data => {
                 const division = document.getElementById("division");
                 const subject = document.getElementById("subject");
@@ -202,66 +171,61 @@
                 const faculty = document.getElementById("faculty");
                 const batch = document.getElementById("batch");
 
-
-
-                faculty.innerHTML = "<option selected disabled>Select</option>";
+                // Clear old options
+                division.innerHTML = "<option selected disabled>Select</option>";
                 subject.innerHTML = "<option selected disabled>Select</option>";
                 room.innerHTML = "<option selected disabled>Select</option>";
-                division.innerHTML = "<option selected disabled>Select</option>";
-                batch.innerHTML = "<option selected disabled>Select</option>";
+                faculty.innerHTML = "<option selected disabled>Select</option>";
+                batch.innerHTML = "<option selected disabled>Select</option><option value='NO'>NO</option>";
 
                 const div_res = data.divisions;
                 const sub_res = data.subjects;
                 const room_res = data.rooms;
                 const fac_res = data.faculty;
 
-                div_res.forEach((div)=>{
+                div_res.forEach((div) => {
                     const newOption = document.createElement("option");
                     newOption.text = div[0];
                     newOption.value = div[0];
                     division.appendChild(newOption);
                 });
                 
-                division.addEventListener("change", (event)=>{
+                division.addEventListener("change", (event) => {
                     const sel_batch = event.target.value;
-                    div_res.forEach((div) =>{
-                        if(sel_batch === div[0]){
-                            cur_batchs = [];
-                            for(let k = 0; k < div[1]; k++){
-                                cur_batchs = div[0] + String(k+1);
+                    batch.innerHTML = "<option selected disabled>Select</option><option value='NO'>NO</option>";
+                    div_res.forEach((div) => {
+                        if (sel_batch === div[0]) {
+                            for (let k = 0; k < div[1]; k++) {
+                                const cur_batch = div[0] + String(k + 1);
                                 const newOption = document.createElement("option");
-                                newOption.text = cur_batchs;
-                                newOption.value = cur_batchs;
+                                newOption.text = cur_batch;
+                                newOption.value = cur_batch;
                                 batch.appendChild(newOption);
                             }
                         }
                     });
                 });
 
-                sub_res.forEach((sub)=>{
+                sub_res.forEach((sub) => {
                     const newOption = document.createElement("option");
                     newOption.text = sub;
                     subject.appendChild(newOption);
                 });
 
-                room_res.forEach((rooma)=>{
+                room_res.forEach((rooma) => {
                     const newOption = document.createElement("option");
                     newOption.text = rooma;
                     room.appendChild(newOption);
-                })
+                });
 
-                fac_res.forEach((fac)=>{
+                fac_res.forEach((fac) => {
                     const newOption = document.createElement("option");
                     newOption.text = fac;
                     faculty.appendChild(newOption);
-                })
-
-            })
+                });
+            });
         });
     });
-
-
 </script>
-
 
 {% endblock content %}

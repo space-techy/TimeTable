@@ -96,3 +96,60 @@ SELECT * FROM "CURRENT_TIMETABLE" WHERE slot = slot AND faculty = faculty;
 -- This query is to check whether or not there are already any subjects and room and faculty available
 
 
+
+
+
+
+-- This all insert queries for timetable even_2023_2024;
+
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'AOA', 'A4', 'Monday', '11:00-12:00', 'RPP', 'B505', 'NO', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'PSOT', 'A5', 'Monday', '12:00-1:00', 'RBS', 'B505', 'NO', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'WPL', 'A7', 'Monday', '2:00-3:00', 'BHN', 'B115', 'B1', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'WPL', 'A8', 'Monday', '3:00-4:00', 'BHN', 'B115', 'B1', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'MP', 'A7', 'Monday', '2:00-3:00', 'UBJ', 'B210A', 'B2', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'MP', 'A8', 'Monday', '3:00-4:00', 'UBJ', 'B210A', 'B2', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'AOA', 'A7', 'Monday', '2:00-3:00', 'KRK', 'B109', 'B3', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'AOA', 'A8', 'Monday', '3:00-4:00', 'KRK', 'B109', 'B3', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'AOA', 'B4', 'Tuesday', '11:00-12:00', 'RPP', 'B505', 'NO', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'PSOT', 'B5', 'Tuesday', '12:00-1:00', 'RBS', 'B505', 'NO', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'MP', 'B7', 'Tuesday', '2:00-3:00', 'BHN', 'ZZZ', 'B1', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'MP', 'B7', 'Tuesday', '2:00-3:00', 'UBJ', 'XXX', 'B2', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'MP', 'B7', 'Tuesday', '2:00-3:00', 'JVJ', 'YYY', 'B3', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'TAC', 'B8', 'Tuesday', '3:00-4:00', 'VPV', 'B505', 'NO', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'WPL', 'B10', 'Tuesday', '5:00-6:00', 'BHN', 'B115', 'B1', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'WPL', 'B9', 'Tuesday', '4:00-5:00', 'BHN', 'B115', 'B1', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'WPL', 'B10', 'Tuesday', '5:00-6:00', 'DVJ', 'B215', 'B2', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'WPL', 'B9', 'Tuesday', '4:00-5:00', 'DVJ', 'B215', 'B2', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'MP', 'B10', 'Tuesday', '5:00-6:00', 'JVJ', 'B210A', 'B3', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'MP', 'B9', 'Tuesday', '4:00-5:00', 'JVJ', 'B210A', 'B3', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'RDBMS', 'C3', 'Wednesday', '10:00-11:00', 'VAB', 'B505', 'NO', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'AOA', 'C4', 'Wednesday', '11:00-12:00', 'RPP', 'B505', 'NO', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'MP', 'C7', 'Wednesday', '2:00-3:00', 'BHN', 'B109', 'B1', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'MP', 'C8', 'Wednesday', '3:00-4:00', 'BHN', 'B109', 'B1', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'WPL', 'C7', 'Wednesday', '2:00-3:00', 'DVJ', 'B215', 'B2', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'WPL', 'C8', 'Wednesday', '3:00-4:00', 'DVJ', 'B215', 'B2', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'WPL', 'C7', 'Wednesday', '2:00-3:00', 'VAB', 'CCF_B', 'B3', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'WPL', 'C8', 'Wednesday', '3:00-4:00', 'VAB', 'CCF_B', 'B3', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'TAC', 'D3', 'Thursday', '10:00-11:00', 'VPV', 'B505', 'NO', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'AOA', 'D4', 'Thursday', '11:00-12:00', 'GSS', 'B116', 'B1', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'AOA', 'D5', 'Thursday', '12:00-1:00', 'GSS', 'B116', 'B1', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'RDBMS', 'D4', 'Thursday', '11:00-12:00', 'BPK', 'B512', 'B2', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'RDBMS', 'D5', 'Thursday', '12:00-1:00', 'BPK', 'B512', 'B2', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'WPL', 'D4', 'Thursday', '11:00-12:00', 'VAB', 'B115', 'B3', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'WPL', 'D5', 'Thursday', '12:00-1:00', 'VAB', 'B115', 'B3', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'RDBMS', 'D7', 'Thursday', '2:00-3:00', 'VAB', 'B505', 'NO', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'PSOT', 'D8', 'Thursday', '3:00-4:00', 'RBS', 'B505', 'NO', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'RDBMS', 'E3', 'Friday', '10:00-11:00', 'VAB', 'B505', 'NO', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'TAC', 'E4', 'Friday', '11:00-12:00', 'VPV', 'B505', 'NO', 'L', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'TAC', 'E5', 'Friday', '12:00-1:00', 'AYN', 'B505', 'B1', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'TAC', 'E5', 'Friday', '12:00-1:00', 'VPV', 'B204', 'B2', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'TAC', 'E5', 'Friday', '12:00-1:00', 'AAG', 'A104', 'B3', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'RDBMS', 'E7', 'Friday', '2:00-3:00', 'VAB', 'B109', 'B1', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'RDBMS', 'E8', 'Friday', '3:00-4:00', 'VAB', 'B109', 'B1', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'AOA', 'E7', 'Friday', '2:00-3:00', 'RPP', 'B116', 'B2', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'AOA', 'E8', 'Friday', '3:00-4:00', 'RPP', 'B116', 'B2', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'RDBMS', 'E7', 'Friday', '2:00-3:00', 'SNS', 'B512', 'B3', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'RDBMS', 'E8', 'Friday', '3:00-4:00', 'SNS', 'B512', 'B3', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'PSOT', 'C5', 'Wednesday', '12:00-1:00', 'RBS', 'CCF_A', 'B1', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'PSOT', 'C5', 'Wednesday', '12:00-1:00', 'YMT', 'CCF_B', 'B2', 'P', 'COMP', 'B' );
+INSERT INTO even_2023_2024 (class, subject, slot, day, time, faculty, room, batch, type, branch, division) VALUES ('SY B. Tech COMP', 'PSOT', 'C5', 'Wednesday', '12:00-1:00', 'JHK', 'B210A', 'B3', 'P', 'COMP', 'B' );

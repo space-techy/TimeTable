@@ -2,7 +2,7 @@
 
 
 {% block content %}
-    {% if(g.CURR_USER != "ADMIN")%}
+    {% if(g.CURR_USER.lower() != "admin")%}
         {% set isDisabled = "disabled" %}
     {% else %}
         {% set isDisabled = "" %}

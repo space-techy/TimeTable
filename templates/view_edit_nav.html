@@ -1,0 +1,81 @@
+{% extends "view_edit.html" %}
+
+{% block view_edit_body %}
+
+
+    <nav class="navbar navbar-expand-lg bg-body-tertiary" style="height: 5% !important; padding-top: 1%; padding-bottom: 1.5%;">
+        <div class="container-fluid">
+                <input type="hidden" name="class" value="{{div_class}}">
+                <input type="hidden" name="division" value='{{sel_class.strip(" ")[-1]}}'>
+                <label for="subject">Subject :</label>
+                <select style="margin-left: 5px; margin-right: 5px;" id="subject" name="subject" onclick="add" onchange="addToData(this)">
+                    <option selected disabled>Select</option>
+                    <!-- Add other subject options here -->
+                    {% for sub in sub_res  %}
+                        <option value="{{sub[0]}}">{{sub[0]}}</option>
+                    {% endfor %}
+                </select>
+                <label for="room">Room :</label>
+                <select style="margin-left: 5px; margin-right: 5px;" id="room" name="room" onchange="addToData(this)">
+                    <option selected disabled>Select</option>
+                    {% for room in room_res %}
+                        <option value="{{room[0]}}">{{room[0]}}</option>
+                    {% endfor %}
+                </select>
+                <label for="faculty">Faculty :</label>
+                <select style="margin-left: 5px; margin-right: 5px;" id="faculty" name="faculty" onchange="addToData(this)">
+                    <option selected disabled>Select</option>
+                    {% for fac in fac_res %}
+                        <option value="{{fac[0]}}">{{fac[0]}}</option>
+                    {% endfor %}
+                </select>
+                <label for="batch">Batch :</label>
+                <select style="margin-left: 5px; margin-right: 5px;" id="batch" name="batch" onchange="addToData(this)">
+                    <option selected disabled>Select</option>
+                    <option value="NO">NO</option>
+                    {% for batch in all_batch %}
+                        <option value="{{batch}}">{{batch}}</option>
+                    {% endfor %}
+                    <!-- Add other batch options here -->
+                </select>
+        </div>
+    </nav>
+
+
+
+
+
+<script>
+
+    var insertData = {};
+    const select_class_division = document.querySelectorAll("input");
+    
+    insertData["class"] = select_class_division[0].value;
+    insertData["division"] = select_class_division[1].value;
+
+    function addToData(element){
+        insertData[element.name] = element.value;
+    }
+    
+    async function insertDataToBack(){
+        const bodySend = JSON.stringify(insertData);
+        
+    }
+
+
+
+    document.addEventListener("DOMContentLoaded",()=>{
+        const tdData = document.querySelectorAll("td");
+        tdData.forEach((tdDataInfo,i)=>{
+            tdDataInfo.addEventListener("click",(element)=>{
+                insertData["slot"] = tdData[i].classList[0];
+            });
+        });
+    });
+
+
+</script>
+
+
+
+{% endblock view_edit_body %}

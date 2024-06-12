@@ -2,6 +2,8 @@
 
 {% block timeshow %}
     {# <button onclick="downloadPDF()">Download</button> #}
+    <table id="timets" hidden>
+    </table>
     {% if(timetable) %}
         <div class="timetable-container" id="time-table" style="margin-top: 2%;">
             <header>
@@ -26,12 +28,12 @@
                     {% endif %}
                 </p>
             </section>
-            <table class="timetable" id="time-table">
+            <table class="timetable" id="time-table-shown">
                 {{ timetable | safe }}
             </table>
             <p style="float: left;">H.O.D</p>
             <p style="float: right;">PRINCIPAL</p>
         </div>
     {% endif %}
-
+    
 {% endblock timeshow %}

@@ -3,7 +3,8 @@ import mysql.connector as mysql
 from flask_login import  login_user, logout_user, LoginManager, login_required, current_user
 from datetime import timedelta
 from user_helper import User
-from check_queries import check_data
+# from check_queries import check_data
+# from api_timetable import select_class,select_room,select_faculty
 import openpyxl
 import ast
 import os
@@ -52,6 +53,302 @@ def load_user():
     CURR_BRANCH = session.get("username")
 
 
+
+
+
+
+
+def check_data(imp_year_sem,div_para = None,all_para = None,fac_para = None,room_para = None):
+    check_div_query = f"SELECT * FROM { imp_year_sem }  WHERE class = %s AND slot = %s AND batch = %s AND division = %s AND branch = %s"
+    check_all_query = f"SELECT * FROM { imp_year_sem } WHERE class = %s AND subject = %s AND slot = %s AND faculty = %s AND room = %s AND batch = %s AND branch = %s AND division = %s"
+    check_fac_query = f"SELECT * FROM { imp_year_sem } WHERE slot = %s AND (faculty LIKE %s) "
+    check_room_query = f"SELECT * FROM { imp_year_sem } WHERE slot = %s AND room = %s"
+    if((not div_para) and (not all_para) and (not fac_para) and (room_para)):
+        cursor.execute(check_room_query, room_para)
+        room_res = cursor.fetchall()
+        if(len(room_res) >= 1):
+            return True
+        else:
+            return False
+    if((not div_para) and (not all_para) and (fac_para) and (not room_para)):
+        cursor.execute(check_fac_query, fac_para)
+        fac_res = cursor.fetchall()
+        if(len(fac_res) >= 1):
+            return True
+        else:
+            return False
+    if((not div_para) and ( all_para) and (not fac_para) and (not room_para)):
+        cursor.execute(check_all_query, all_para)
+        all_res = cursor.fetchall()
+        if(len(all_res) >= 1):
+            return True
+        else:
+            return False
+    if(( div_para) and (not all_para) and (not fac_para) and (not room_para)):
+        cursor.execute(check_div_query, div_para)
+        div_res = cursor.fetchall()
+        if(len(div_res) >= 1):
+            return True
+        else:
+            return False
+    if(( div_para) and ( all_para) and ( fac_para) and ( room_para)):
+        cursor.execute(check_div_query,div_para)
+        check_div_res = cursor.fetchall()
+        cursor.execute(check_all_query,all_para)
+        check_all_res = cursor.fetchall()
+        cursor.execute(check_fac_query,fac_para)
+        check_fac_res = cursor.fetchall()
+        cursor.execute(check_room_query,room_para)
+        check_room_res = cursor.fetchall()
+        if((len(check_div_res) > 0) or (len(check_all_res) > 0) or (len(check_fac_res) > 0) or (len(check_room_res) > 0)):
+            return True
+        else:
+            return False
+        
+
+
+
+
+
+
+
+
+
+
+
+
+def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
+    daysInDict = { "Monday" :'A' ,"Tuesday" : 'B', "Wednesday" : "C" , "Thursday": 'D', "Friday" : 'E'}
+    course_year = sel_class[0:2]
+    course_batch = sel_class[-1]
+    course = sel_class[3:10]
+    course_department = CURR_BRANCH
+    div_para = (course_year, course,course_department,course_batch)
+    div_query = "SELECT no_of_div FROM divisions WHERE year = %s AND course = %s AND department = %s AND batch = %s"
+    cursor.execute(div_query, div_para)
+    div_res = cursor.fetchall()
+    if(len(div_res) == 0):
+        no_of_div = 0
+    else:
+        no_of_div = div_res[0][0]
+    time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    # Now we are working on the part of adding colspan for days
+    day_colspan = {}
+    total_columns = 0
+    for day in days:
+        day_query = f"SELECT batch FROM {CURR_YEAR_SEM} WHERE division = %s AND branch = %s AND day = %s AND batch != 'NO'"
+        day_para = ( course_batch, course_department, day)
+        cursor.execute( day_query, day_para)
+        day_res = cursor.fetchall()
+        if(len(day_res) > 0 ):
+            day_colspan[day] = no_of_div
+            total_columns = total_columns + no_of_div
+        else:
+            day_colspan[day] = 1
+            total_columns = total_columns + 1
+    
+    # This code is for creating html table head with colspan
+    table_head = "<thead><tr><th style='width: 8%;'>Time/Day</th>"
+    for day in days:
+        if(day_colspan[day] > 1):
+            table_head = table_head + f"<th colspan={day_colspan[day]}>{day}</th>"
+        else:
+            table_head = table_head + f"<th colspan={day_colspan[day]}>{day}</th>"
+    table_head  = table_head + "</tr></thead>"
+    # Now we are going to create the body of the table
+    check_back_row = {}
+    table_body = "<tbody>"
+    for t in range(len(time_slots)):
+        table_body = table_body + f"<tr><td class='timeslot'>{time_slots[t]}</td>"
+        if(time_slots[t] == "1:00-2:00"):
+            table_body = table_body + f'<td colspan={total_columns} style="text-align: center;" class="lunch">LUNCH BREAK</td>'
+            continue
+        for day in days:
+            if(time_slots[t] in check_back_row.keys()):
+                if(day in check_back_row[time_slots[t]]):
+                    continue
+            time_query = f"SELECT class,subject,day,faculty,room,type,branch,batch,division FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
+            curr_time_para = (day,time_slots[t],course_department, course_batch)
+            cursor.execute(time_query, curr_time_para)
+            curr_time_res = cursor.fetchall()
+            curr_time_res = sorted(curr_time_res)
+            if((t+1) != len(time_slots)):
+                next_time_para = (day,time_slots[t + 1],course_department, course_batch)
+                cursor.execute(time_query, next_time_para )
+                next_time_res = cursor.fetchall()
+                next_time_res = sorted(next_time_res)
+            rowspan_or_not = False
+            if(next_time_res):
+                if(curr_time_res == next_time_res):
+                    if(time_slots[t+1] in check_back_row.keys()):
+                        add_day =  check_back_row[time_slots[t + 1]]
+                        add_day.append(day)
+                        check_back_row[time_slots[t + 1]] = add_day
+                        rowspan_or_not = True
+                    else:
+                        check_back_row[time_slots[t + 1]] = [day]
+                        rowspan_or_not = True
+            data_query = f"SELECT subject,room,faculty,division,batch FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
+            cursor.execute(data_query, curr_time_para)
+            data_res = cursor.fetchall()
+            if(len(data_res) == 0):
+                table_body = table_body + f"<td colspan = {day_colspan[day]} class='{daysInDict[day]+str(t+1)}'></td>"
+                continue
+            if(len(data_res) > 1):
+                for curr_batch in data_res:
+                    if(rowspan_or_not):
+                        td = f'<td rowspan=2 colspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[4] } <br /> {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } </td>'
+                        table_body = table_body + td
+                    else:
+                        td = f'<td rowspan=1 colspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[4] } <br /> {" "}  { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                        table_body = table_body + td
+            else:
+                curr_batch = data_res[0]
+                if(rowspan_or_not):
+                    td = f'<td rowspan=2 colspan={ no_of_div } class="{daysInDict[day]+str(t+1)}">  {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }  </td>'
+                    table_body = table_body + td
+                else:
+                    td = f'<td rowspan=1 colspan={ no_of_div } class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } </td>'
+                    table_body = table_body + td
+            next_time_res = False
+        table_body = table_body + "</tr>"
+    table_body = table_body + "</tbody>"
+    complete_table = table_head + table_body
+    return complete_table
+
+
+def select_room(sel_room,CURR_BRANCH,CURR_YEAR_SEM):
+    daysInDict = { "Monday" :'A' ,"Tuesday" : 'B', "Wednesday" : "C" , "Thursday": 'D', "Friday" : 'E'}
+    time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    table_head = "<thead><tr><th style='width: 8%;'>Time/Day</th>"
+    for day in days:
+        table_head = table_head + f"<th>{day}</th>"
+    table_head = table_head + "</tr></thead>"
+    check_back_row = {}
+    table_body = "<tbody>"
+    for t in range(len(time_slots)):
+        table_body = table_body + f"<tr><td class='timeslot'>{time_slots[t]}</td>"
+        if(time_slots[t] == "1:00-2:00"):
+            table_body = table_body + f'<td colspan=5 style="text-align: center;" class="lunch">LUNCH BREAK</td>'
+            continue
+        for day in days:
+            if(time_slots[t] in check_back_row.keys()):
+                if(day in check_back_row[time_slots[t]]):
+                    continue
+            time_query = f"SELECT class,subject,faculty,division,batch FROM {CURR_YEAR_SEM} WHERE room = %s AND branch = %s AND day = %s AND time = %s"
+            curr_time_para = ( sel_room, CURR_BRANCH, day, time_slots[t])
+            cursor.execute(time_query, curr_time_para)
+            curr_time_res = cursor.fetchall()
+            curr_time_res = sorted(curr_time_res)
+            if((t+1) != len(time_slots)):
+                next_time_para = ( sel_room, CURR_BRANCH, day, time_slots[t+1])
+                cursor.execute(time_query, next_time_para)
+                next_time_res = cursor.fetchall()
+                next_time_res = sorted(next_time_res)
+            rowspan_or_not = False
+            if(next_time_res):
+                if(curr_time_res == next_time_res):
+                    if(time_slots[t+1] in check_back_row.keys()):
+                        add_day =  check_back_row[time_slots[t + 1]]
+                        add_day.append(day)
+                        check_back_row[time_slots[t + 1]] = add_day
+                        rowspan_or_not = True
+                    else:
+                        check_back_row[time_slots[t + 1]] = [day]
+                        rowspan_or_not = True  
+            if(len(curr_time_res) == 0):
+                table_body = table_body + f"<td class='{daysInDict[day]+str(t+1)}'></td>"
+                continue
+            curr_batch = curr_time_res[0]
+            if(rowspan_or_not):
+                if(curr_batch[-1] == "NO"):
+                    td = f'<td value="{ sel_room }" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-2] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    table_body = table_body + td
+                else:
+                    td = f'<td value="{ sel_room }" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-1] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    table_body = table_body + td
+            else:
+                if(curr_batch[-1] == "NO"):
+                    td = f'<td value="{ sel_room }" rowspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-2] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    table_body = table_body + td
+                else:
+                    td = f'<td value="{ sel_room }" rowspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-1] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    table_body = table_body + td
+            next_time_res = False
+        table_body = table_body + "</tr>"
+    table_body = table_body + "</tbody>"
+    complete_table = table_head + table_body
+    return complete_table
+
+
+def select_faculty(sel_fac,CURR_BRANCH,CURR_YEAR_SEM):
+    daysInDict = { "Monday" :'A' ,"Tuesday" : 'B', "Wednesday" : "C" , "Thursday": 'D', "Friday" : 'E'}
+    time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+
+    table_head = "<thead><tr><th style='width: 8%;'>Time/Day</th>"
+    for day in days:
+        table_head = table_head + f"<th>{day}</th>"
+    table_head = table_head + "</tr></thead>"
+    check_back_row = {}
+    table_body = "<tbody>"
+    for t in range(len(time_slots)):
+        table_body = table_body + f"<tr><td class='timeslot'>{time_slots[t]}</td>"
+        if(time_slots[t] == "1:00-2:00"):
+            table_body = table_body + f'<td colspan=5 style="text-align: center;" class="lunch">LUNCH BREAK</td>'
+            continue
+        for day in days:
+            if(time_slots[t] in check_back_row.keys()):
+                if(day in check_back_row[time_slots[t]]):
+                    continue
+            time_query = f"SELECT class,subject,room,division,batch FROM  { CURR_YEAR_SEM } WHERE faculty LIKE %s AND day = %s AND time = %s AND branch = %s"
+            curr_time_para = ( f"%{sel_fac}%", day, time_slots[t], CURR_BRANCH)
+            cursor.execute(time_query,curr_time_para)
+            curr_time_res = cursor.fetchall()
+            curr_time_res = sorted(curr_time_res)
+            if((t+1) != len(time_slots)):
+                next_time_para = ( f"%{sel_fac}%", day, time_slots[t+1], CURR_BRANCH)
+                cursor.execute(time_query, next_time_para)
+                next_time_res = cursor.fetchall()
+                next_time_res = sorted(next_time_res)
+            rowspan_or_not = False
+            if(next_time_res):
+                if(curr_time_res == next_time_res):
+                    if(time_slots[t+1] in check_back_row.keys()):
+                        add_day =  check_back_row[time_slots[t + 1]]
+                        add_day.append(day)
+                        check_back_row[time_slots[t + 1]] = add_day
+                        rowspan_or_not = True
+                    else:
+                        check_back_row[time_slots[t + 1]] = [day]
+                        rowspan_or_not = True
+            if(len(curr_time_res) == 0):
+                table_body = table_body + f"<td class='{daysInDict[day]+str(t+1)}''></td>"
+                continue
+            curr_batch = curr_time_res[0]
+            if(rowspan_or_not):
+                if(curr_batch[-1] == "NO"):
+                    td = f'<td value="{sel_fac}" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-2] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    table_body = table_body + td
+                else:
+                    td = f'<td  value="{sel_fac}" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-1] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    table_body = table_body + td
+            else:
+                if(curr_batch[-1] == "NO"):
+                    td = f'<td  value="{sel_fac}" rowspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-2] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    table_body = table_body + td
+                else:
+                    td = f'<td value="{sel_fac}"  rowspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-1] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    table_body = table_body + td
+            next_time_res = False
+        table_body = table_body + "</tr>"
+    table_body = table_body + "</tbody>"
+    complete_table = table_head + table_body
+    return complete_table
+
+
 #This is for users to log in
 @app.route("/login", methods=["GET","POST"], endpoint = "login")
 def login_page():
@@ -73,9 +370,6 @@ def login_page():
             session.permanent = True
             app.permanent_session_lifetime = timedelta(minutes=30)
             return redirect("/")
-        elif(len(result) == 0):
-            error = "User not registered"
-            return redirect(url_for("login",error = error))
         else:
             error = "User or Password wrong!"
             return redirect(url_for("login",error = error))
@@ -176,7 +470,7 @@ def create_timetable():
             cursor.execute(insert_query, ( year, sem.upper(), sem_year))
             cursor.execute(create_query)
             conn.commit()
-            return redirect("/assign_slots")
+            return redirect("/")
         except:
             error = "TimeTable Already Exists!"
             return redirect(url_for("create_timetable",error = error))
@@ -409,8 +703,6 @@ def import_check():
     im_time_res = cursor.fetchall()
     return render_template("import_excel.html",class_batch = im_res, year_sem = im_time_res)
 
-
-
 @app.route("/import_excel", methods=[ "GET", "POST"])
 def import_excel():
     if request.method == "POST":
@@ -563,6 +855,34 @@ def get_div():
         }
         return jsonify(send_results)
     
+
+
+@app.route("/get_room", methods = ["GET", "POST"])
+def get_room():
+    if request.method == "POST":
+        sel_room = request.get_json()
+        sel_room = sel_room["getTableOf"]
+        if(sel_room):
+            complete_table = select_room(sel_room,CURR_BRANCH,CURR_YEAR_SEM)
+            send_results = {
+                "complete_table": complete_table, 
+            }
+            return jsonify(send_results)
+        
+@app.route("/get_fac", methods = ["GET", "POST"])
+def get_fac():
+    if request.method == "POST":
+        sel_fac = request.get_json()
+        sel_fac = sel_fac["getTableOf"]
+        if(sel_fac):
+            complete_table = select_faculty(sel_fac,CURR_BRANCH,CURR_YEAR_SEM)
+            send_results = {
+                "complete_table": complete_table, 
+            }
+            return jsonify(send_results)
+
+
+
 
 # This is to remove particular slot from the timetable
 @app.route("/remove_slot",methods=["POST",])
@@ -824,104 +1144,15 @@ def assign_slots():
 @login_required
 def show_timetable():
     if request.method == "POST":
+        request_type = request.form.get("button_submit")
         sel_class = request.form.get("sel_class")
+        if(request_type == "edit" and sel_class):
+            return redirect(url_for("view_edit",sel_class = sel_class))
         sel_room = request.form.get("sel_room")
         sel_fac = request.form.get("sel_fac")
         if(sel_class):
             show_class = f"Class: {sel_class}"
-            course_year = sel_class[0:2]
-            course_batch = sel_class[-1]
-            course = sel_class[3:10]
-            course_department = CURR_BRANCH
-            div_para = (course_year, course,course_department,course_batch)
-            div_query = "SELECT no_of_div FROM divisions WHERE year = %s AND course = %s AND department = %s AND batch = %s"
-            cursor.execute(div_query, div_para)
-            div_res = cursor.fetchall()
-            no_of_div = div_res[0][0]
-            time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
-            days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-            # Now we are working on the part of adding colspan for days
-            day_colspan = {}
-            total_columns = 0
-            for day in days:
-                day_query = f"SELECT batch FROM {CURR_YEAR_SEM} WHERE division = %s AND branch = %s AND day = %s AND batch != 'NO'"
-                day_para = ( course_batch, course_department, day)
-                cursor.execute( day_query, day_para)
-                day_res = cursor.fetchall()
-                if(len(day_res) > 0 ):
-                    day_colspan[day] = no_of_div
-                    total_columns = total_columns + no_of_div
-                else:
-                    day_colspan[day] = 1
-                    total_columns = total_columns + 1
-            
-            # This code is for creating html table head with colspan
-            table_head = "<thead><tr><th style='width: 8%;'>Time/Day</th>"
-            for day in days:
-                if(day_colspan[day] > 1):
-                    table_head = table_head + f"<th colspan={day_colspan[day]}>{day}</th>"
-                else:
-                    table_head = table_head + f"<th colspan={day_colspan[day]}>{day}</th>"
-            table_head  = table_head + "</tr></thead>"
-            # Now we are going to create the body of the table
-            check_back_row = {}
-            table_body = "<tbody>"
-            for t in range(len(time_slots)):
-                table_body = table_body + f"<tr><td>{time_slots[t]}</td>"
-                if(time_slots[t] == "1:00-2:00"):
-                    table_body = table_body + f'<td colspan={total_columns} style="text-align: center;">LUNCH BREAK</td>'
-                    continue
-                for day in days:
-                    if(time_slots[t] in check_back_row.keys()):
-                        if(day in check_back_row[time_slots[t]]):
-                            continue
-                    time_query = f"SELECT class,subject,day,faculty,room,type,branch,batch,division FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
-                    curr_time_para = (day,time_slots[t],course_department, course_batch)
-                    cursor.execute(time_query, curr_time_para)
-                    curr_time_res = cursor.fetchall()
-                    curr_time_res = sorted(curr_time_res)
-                    if((t+1) != len(time_slots)):
-                        next_time_para = (day,time_slots[t + 1],course_department, course_batch)
-                        cursor.execute(time_query, next_time_para )
-                        next_time_res = cursor.fetchall()
-                        next_time_res = sorted(next_time_res)
-                    rowspan_or_not = False
-                    if(next_time_res):
-                        if(curr_time_res == next_time_res):
-                            if(time_slots[t+1] in check_back_row.keys()):
-                                add_day =  check_back_row[time_slots[t + 1]]
-                                add_day.append(day)
-                                check_back_row[time_slots[t + 1]] = add_day
-                                rowspan_or_not = True
-                            else:
-                                check_back_row[time_slots[t + 1]] = [day]
-                                rowspan_or_not = True
-                    data_query = f"SELECT subject,room,faculty,division,batch FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
-                    cursor.execute(data_query, curr_time_para)
-                    data_res = cursor.fetchall()
-                    if(len(data_res) == 0):
-                        table_body = table_body + f"<td colspan = {day_colspan[day]}></td>"
-                        continue
-                    if(len(data_res) > 1):
-                        for curr_batch in data_res:
-                            if(rowspan_or_not):
-                                td = f'<td rowspan=2 colspan=1>{ curr_batch[4] } <br /> {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } </td>'
-                                table_body = table_body + td
-                            else:
-                                td = f'<td rowspan=1 colspan=1>{ curr_batch[4] } <br /> {" "}  { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
-                                table_body = table_body + td
-                    else:
-                        curr_batch = data_res[0]
-                        if(rowspan_or_not):
-                            td = f'<td rowspan=2 colspan={ no_of_div }>  {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }  </td>'
-                            table_body = table_body + td
-                        else:
-                            td = f'<td rowspan=1 colspan={ no_of_div }> {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } </td>'
-                            table_body = table_body + td
-                    next_time_res = False
-                table_body = table_body + "</tr>"
-            table_body = table_body + "</tbody>"
-            complete_table = table_head + table_body
+            complete_table = select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM)
             class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
             room_query = "SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
             fac_query = "SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
@@ -936,66 +1167,7 @@ def show_timetable():
             return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, class_res = class_res, room_res = room_res, fac_res = fac_res,infoImpo = show_class,timetable = complete_table)
         elif(sel_room):
             show_room = f"Room: {sel_room}"
-            time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
-            days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-            table_head = "<thead><tr><th style='width: 8%;'>Time/Day</th>"
-            for day in days:
-                table_head = table_head + f"<th>{day}</th>"
-            table_head = table_head + "</tr></thead>"
-            check_back_row = {}
-            table_body = "<tbody>"
-            for t in range(len(time_slots)):
-                table_body = table_body + f"<tr><td>{time_slots[t]}</td>"
-                if(time_slots[t] == "1:00-2:00"):
-                    table_body = table_body + f'<td colspan=5 style="text-align: center;">LUNCH BREAK</td>'
-                    continue
-                for day in days:
-                    if(time_slots[t] in check_back_row.keys()):
-                        if(day in check_back_row[time_slots[t]]):
-                            continue
-                    time_query = f"SELECT class,subject,faculty,division,batch FROM {CURR_YEAR_SEM} WHERE room = %s AND branch = %s AND day = %s AND time = %s"
-                    curr_time_para = ( sel_room, CURR_BRANCH, day, time_slots[t])
-                    cursor.execute(time_query, curr_time_para)
-                    curr_time_res = cursor.fetchall()
-                    curr_time_res = sorted(curr_time_res)
-                    if((t+1) != len(time_slots)):
-                        next_time_para = ( sel_room, CURR_BRANCH, day, time_slots[t+1])
-                        cursor.execute(time_query, next_time_para)
-                        next_time_res = cursor.fetchall()
-                        next_time_res = sorted(next_time_res)
-                    rowspan_or_not = False
-                    if(next_time_res):
-                        if(curr_time_res == next_time_res):
-                            if(time_slots[t+1] in check_back_row.keys()):
-                                add_day =  check_back_row[time_slots[t + 1]]
-                                add_day.append(day)
-                                check_back_row[time_slots[t + 1]] = add_day
-                                rowspan_or_not = True
-                            else:
-                                check_back_row[time_slots[t + 1]] = [day]
-                                rowspan_or_not = True  
-                    if(len(curr_time_res) == 0):
-                        table_body = table_body + f"<td></td>"
-                        continue
-                    curr_batch = curr_time_res[0]
-                    if(rowspan_or_not):
-                        if(curr_batch[-1] == "NO"):
-                            td = f'<td rowspan=2>{ curr_batch[0] } {" "} { curr_batch[-2] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
-                            table_body = table_body + td
-                        else:
-                            td = f'<td rowspan=2>{ curr_batch[0] } {" "} { curr_batch[-1] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
-                            table_body = table_body + td
-                    else:
-                        if(curr_batch[-1] == "NO"):
-                            td = f'<td rowspan=1>{ curr_batch[0] } {" "} { curr_batch[-2] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
-                            table_body = table_body + td
-                        else:
-                            td = f'<td rowspan=1>{ curr_batch[0] } {" "} { curr_batch[-1] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
-                            table_body = table_body + td
-                    next_time_res = False
-                table_body = table_body + "</tr>"
-            table_body = table_body + "</tbody>"
-            complete_table = table_head + table_body
+            complete_table = select_room(sel_room,CURR_BRANCH,CURR_YEAR_SEM)
             class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
             room_query = "SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
             fac_query = "SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
@@ -1011,66 +1183,7 @@ def show_timetable():
         elif(sel_fac):
             show_faculty = ""
             fac_load = ""
-            time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
-            days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-            table_head = "<thead><tr><th style='width: 8%;'>Time/Day</th>"
-            for day in days:
-                table_head = table_head + f"<th>{day}</th>"
-            table_head = table_head + "</tr></thead>"
-            check_back_row = {}
-            table_body = "<tbody>"
-            for t in range(len(time_slots)):
-                table_body = table_body + f"<tr><td>{time_slots[t]}</td>"
-                if(time_slots[t] == "1:00-2:00"):
-                    table_body = table_body + f'<td colspan=5 style="text-align: center;">LUNCH BREAK</td>'
-                    continue
-                for day in days:
-                    if(time_slots[t] in check_back_row.keys()):
-                        if(day in check_back_row[time_slots[t]]):
-                            continue
-                    time_query = f"SELECT class,subject,room,division,batch FROM  { CURR_YEAR_SEM } WHERE faculty LIKE %s AND day = %s AND time = %s AND branch = %s"
-                    curr_time_para = ( f"%{sel_fac}%", day, time_slots[t], CURR_BRANCH)
-                    cursor.execute(time_query,curr_time_para)
-                    curr_time_res = cursor.fetchall()
-                    curr_time_res = sorted(curr_time_res)
-                    if((t+1) != len(time_slots)):
-                        next_time_para = ( f"%{sel_fac}%", day, time_slots[t+1], CURR_BRANCH)
-                        cursor.execute(time_query, next_time_para)
-                        next_time_res = cursor.fetchall()
-                        next_time_res = sorted(next_time_res)
-                    rowspan_or_not = False
-                    if(next_time_res):
-                        if(curr_time_res == next_time_res):
-                            if(time_slots[t+1] in check_back_row.keys()):
-                                add_day =  check_back_row[time_slots[t + 1]]
-                                add_day.append(day)
-                                check_back_row[time_slots[t + 1]] = add_day
-                                rowspan_or_not = True
-                            else:
-                                check_back_row[time_slots[t + 1]] = [day]
-                                rowspan_or_not = True
-                    if(len(curr_time_res) == 0):
-                        table_body = table_body + f"<td></td>"
-                        continue
-                    curr_batch = curr_time_res[0]
-                    if(rowspan_or_not):
-                        if(curr_batch[-1] == "NO"):
-                            td = f'<td rowspan=2>{ curr_batch[0] } {" "} { curr_batch[-2] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
-                            table_body = table_body + td
-                        else:
-                            td = f'<td rowspan=2>{ curr_batch[0] } {" "} { curr_batch[-1] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
-                            table_body = table_body + td
-                    else:
-                        if(curr_batch[-1] == "NO"):
-                            td = f'<td rowspan=1>{ curr_batch[0] } {" "} { curr_batch[-2] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
-                            table_body = table_body + td
-                        else:
-                            td = f'<td rowspan=1>{ curr_batch[0] } {" "} { curr_batch[-1] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
-                            table_body = table_body + td
-                    next_time_res = False
-                table_body = table_body + "</tr>"
-            table_body = table_body + "</tbody>"
-            complete_table = table_head + table_body
+            complete_table = select_faculty(sel_fac,CURR_BRANCH,CURR_YEAR_SEM)
             class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
             room_query = "SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
             fac_query = "SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
@@ -1324,7 +1437,6 @@ def change_slots():
                     check_slot_res = cursor.fetchall()
                     if(len(check_slot_res) == 1):
                         if(check_curr_slot_id in check_update_double):
-                            print("Failed to goback")
                             conn.rollback()
                             error = f"In edit two or more ids this ({check_update_double}) tried to have same value for id {check_curr_slot_id}"
                             return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
@@ -1381,7 +1493,9 @@ def change_slots():
                 if( (request.form.getlist("faculty")[curr_row] != request.form.getlist("faculty_bef")[curr_row]) and (request.form.getlist("faculty")[curr_row] != "")):
                     fac_res = check_data( CURR_YEAR_SEM, fac_para=fac_para)
                 if((request.form.getlist("room")[curr_row] != request.form.getlist("room_bef")[curr_row] ) and (request.form.getlist("room")[curr_row] != "")):
+                    print("ROoom Resoultuin     ")
                     room_res = check_data( CURR_YEAR_SEM, room_para=room_para)
+                    print(room_res)
                 if(div_res and room_res and fac_res):
                     all_res = check_data( CURR_YEAR_SEM, all_para=all_para)
                 if(div_res or all_res or fac_res or room_res):
@@ -1444,6 +1558,42 @@ def change_slots():
         else:
             error = "Some other unencountered error occured! Please go back to home page"
             return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
-        cursor.execute("DELETE FROM temp_data")
         conn.commit()
     return redirect(url_for("assign_slots",error = "Successfully Changed the data!"))
+
+
+
+
+
+
+
+@app.route("/view_edit", methods = ["GET","POST"])
+@login_required
+def view_edit():
+    if request.method == "POST":
+        return redirect("/show_timetable")
+    else:      
+        sel_class = request.args.get("sel_class")
+        infoImpo = f"Class: {sel_class}"
+        division_sep = sel_class.strip(" ")[-1]
+        view_query = f"SELECT no_of_div,class FROM divisions WHERE batch = %s AND department = %s"
+        view_para = (division_sep,CURR_BRANCH)
+        cursor.execute(view_query,view_para)
+        view_res = cursor.fetchall()[0]
+        all_batch = [(division_sep + str(x+1)) for x in range(view_res[0])]
+        cursor.execute("SELECT roomno FROM rooms")
+        room_res = cursor.fetchall()
+        cursor.execute("SELECT facinit FROM faculty")
+        fac_res = cursor.fetchall()
+        cursor.execute("SELECT subabb FROM subjects WHERE subdep = %s",(CURR_BRANCH,))
+        sub_res = cursor.fetchall()
+        complete_table = select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM)
+        print(sub_res,room_res,fac_res,all_batch)
+        return render_template("view_edit_nav.html",timetable = complete_table,CURR_YEAR_SEM = CURR_YEAR_SEM,infoImpo = infoImpo,
+        sel_class = sel_class,all_batch = all_batch,room_res = room_res,fac_res =fac_res,sub_res =sub_res,div_class = view_res[1])
+    
+
+
+@app.route("/view_edit_check_api", methods = ["POST",])
+def view_edit_check_api():
+    return redirect("/")

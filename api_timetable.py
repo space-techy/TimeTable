@@ -11,6 +11,3 @@
 # conn = mysql.connect(**config)
 # cursor = conn.cursor()
 
-
-
-    

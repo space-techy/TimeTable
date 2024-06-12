@@ -17,7 +17,7 @@
                     <form action="/add_subjects" method="POST">
                         <div class="form-group d-flex align-items-center">
                         <label>Class :</label>
-                        <select name="class_sub" class="form-select" aria-label="Default select example">
+                        <select name="class_sub" class="form-select" aria-label="Default select example" >
                             <option selected disabled>Select Class</option>
                             {% for cl in class_sub %}
                                 <option value="{{ cl[0] }}"> {{ cl[0] }}</option>
