@@ -52,7 +52,7 @@ def load_user():
     global CURR_BRANCH
     CURR_BRANCH = session.get("username")
 
-
+    
 
 
 
@@ -67,28 +67,28 @@ def check_data(imp_year_sem,div_para = None,all_para = None,fac_para = None,room
         cursor.execute(check_room_query, room_para)
         room_res = cursor.fetchall()
         if(len(room_res) >= 1):
-            return True
+            return room_res
         else:
             return False
     if((not div_para) and (not all_para) and (fac_para) and (not room_para)):
         cursor.execute(check_fac_query, fac_para)
         fac_res = cursor.fetchall()
         if(len(fac_res) >= 1):
-            return True
+            return fac_res
         else:
             return False
     if((not div_para) and ( all_para) and (not fac_para) and (not room_para)):
         cursor.execute(check_all_query, all_para)
         all_res = cursor.fetchall()
         if(len(all_res) >= 1):
-            return True
+            return all_res
         else:
             return False
     if(( div_para) and (not all_para) and (not fac_para) and (not room_para)):
         cursor.execute(check_div_query, div_para)
         div_res = cursor.fetchall()
         if(len(div_res) >= 1):
-            return True
+            return div_res
         else:
             return False
     if(( div_para) and ( all_para) and ( fac_para) and ( room_para)):
@@ -101,20 +101,10 @@ def check_data(imp_year_sem,div_para = None,all_para = None,fac_para = None,room
         cursor.execute(check_room_query,room_para)
         check_room_res = cursor.fetchall()
         if((len(check_div_res) > 0) or (len(check_all_res) > 0) or (len(check_fac_res) > 0) or (len(check_room_res) > 0)):
-            return True
+            return max(check_div_res, check_all_res,check_fac_res, check_room_res)
         else:
             return False
         
-
-
-
-
-
-
-
-
-
-
 
 
 def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
@@ -189,27 +179,28 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
                     else:
                         check_back_row[time_slots[t + 1]] = [day]
                         rowspan_or_not = True
-            data_query = f"SELECT subject,room,faculty,division,batch FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
+            data_query = f"SELECT id,subject,room,faculty,division,batch FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
             cursor.execute(data_query, curr_time_para)
             data_res = cursor.fetchall()
+
             if(len(data_res) == 0):
                 table_body = table_body + f"<td colspan = {day_colspan[day]} class='{daysInDict[day]+str(t+1)}'></td>"
                 continue
             if(len(data_res) > 1):
                 for curr_batch in data_res:
                     if(rowspan_or_not):
-                        td = f'<td rowspan=2 colspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[4] } <br /> {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } </td>'
+                        td = f'<td rowspan=2 colspan=1 value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}">{ curr_batch[5] } <br /> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>'
                         table_body = table_body + td
                     else:
-                        td = f'<td rowspan=1 colspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[4] } <br /> {" "}  { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                        td = f'<td rowspan=1 colspan=1 value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}">{ curr_batch[5] } <br /> {" "}  { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }</td>'
                         table_body = table_body + td
             else:
                 curr_batch = data_res[0]
                 if(rowspan_or_not):
-                    td = f'<td rowspan=2 colspan={ no_of_div } class="{daysInDict[day]+str(t+1)}">  {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }  </td>'
+                    td = f'<td rowspan=2 colspan={ no_of_div } value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}">  {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }  </td>'
                     table_body = table_body + td
                 else:
-                    td = f'<td rowspan=1 colspan={ no_of_div } class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] } </td>'
+                    td = f'<td rowspan=1 colspan={ no_of_div } value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>'
                     table_body = table_body + td
             next_time_res = False
         table_body = table_body + "</tr>"
@@ -237,7 +228,7 @@ def select_room(sel_room,CURR_BRANCH,CURR_YEAR_SEM):
             if(time_slots[t] in check_back_row.keys()):
                 if(day in check_back_row[time_slots[t]]):
                     continue
-            time_query = f"SELECT class,subject,faculty,division,batch FROM {CURR_YEAR_SEM} WHERE room = %s AND branch = %s AND day = %s AND time = %s"
+            time_query = f"SELECT id,class,subject,faculty,division,batch FROM {CURR_YEAR_SEM} WHERE room = %s AND branch = %s AND day = %s AND time = %s"
             curr_time_para = ( sel_room, CURR_BRANCH, day, time_slots[t])
             cursor.execute(time_query, curr_time_para)
             curr_time_res = cursor.fetchall()
@@ -584,9 +575,10 @@ def add_faculty():
         error = request.args.get("error")
         if(error is None):
             error = ""
-        fac_query = f"SELECT * FROM faculty WHERE facdep = %s OR facshdep = %s"
+        fac_query = f"SELECT * FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
         cursor.execute(fac_query,(f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%"))
         faculties = cursor.fetchall()
+        print()
         return render_template("add_faculty.html", error = error,faculties = faculties)
     
 
@@ -628,7 +620,7 @@ def add_room():
         error = request.args.get("error")
         if(error is None):
             error = ""
-        room_query = f"SELECT * FROM rooms WHERE roomdep = %s OR roomshdep = %s"
+        room_query = f"SELECT * FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
         cursor.execute(room_query,(f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%"))
         rooms = cursor.fetchall()
         return render_template("add_room.html", error = error,rooms = rooms)
@@ -1576,6 +1568,11 @@ def view_edit():
         sel_class = request.args.get("sel_class")
         infoImpo = f"Class: {sel_class}"
         division_sep = sel_class.strip(" ")[-1]
+        comm_class = str("".join(sel_class.strip(" ")[0:-2]))
+        if(CURR_YEAR_SEM[0] == "O"):
+            subsem = "ODD"
+        else:
+            subsem = "EVEN"
         view_query = f"SELECT no_of_div,class FROM divisions WHERE batch = %s AND department = %s"
         view_para = (division_sep,CURR_BRANCH)
         cursor.execute(view_query,view_para)
@@ -1585,10 +1582,9 @@ def view_edit():
         room_res = cursor.fetchall()
         cursor.execute("SELECT facinit FROM faculty")
         fac_res = cursor.fetchall()
-        cursor.execute("SELECT subabb FROM subjects WHERE subdep = %s",(CURR_BRANCH,))
+        cursor.execute("SELECT subabb FROM subjects WHERE subclass = %s AND subsem = %s",(comm_class,subsem))
         sub_res = cursor.fetchall()
         complete_table = select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM)
-        print(sub_res,room_res,fac_res,all_batch)
         return render_template("view_edit_nav.html",timetable = complete_table,CURR_YEAR_SEM = CURR_YEAR_SEM,infoImpo = infoImpo,
         sel_class = sel_class,all_batch = all_batch,room_res = room_res,fac_res =fac_res,sub_res =sub_res,div_class = view_res[1])
     
@@ -1596,4 +1592,69 @@ def view_edit():
 
 @app.route("/view_edit_check_api", methods = ["POST",])
 def view_edit_check_api():
-    return redirect("/")
+    if request.method == "POST":
+        error = ""
+        slot_info = request.get_json()
+        slot_class = slot_info["class"]
+        slot_div = slot_info["division"]
+        slot_sub = slot_info["subject"]
+        slot_room = slot_info["room"]
+        slot_fac = slot_info["faculty"]
+        slot_batch = slot_info["batch"]
+        slot_slot = slot_info["slot"]
+        slot_type = slot_info["type"]
+
+        # To check for all the clashes
+        # All parameters first
+        fac_para = ( slot_slot, f"%{slot_fac}%")
+        room_para = ( slot_slot, slot_room)
+        div_para = ( slot_class, slot_slot, slot_batch, slot_div, CURR_BRANCH)
+        all_para = ( slot_class, slot_sub, slot_slot, slot_fac, slot_room, slot_batch, CURR_BRANCH, slot_div)
+        # All checks begin here
+        fac_check = check_data( CURR_YEAR_SEM, fac_para=fac_para)
+        div_check = check_data( CURR_YEAR_SEM, div_para=div_para)
+        room_check = check_data( CURR_YEAR_SEM, room_para=room_para)
+        all_check = check_data( CURR_YEAR_SEM, all_para= all_para, fac_para=fac_para, div_para=div_para,room_para=room_para)
+        if(fac_check):
+            error = error +  "Faculty has already been allotted here "+ str(fac_check)
+        if(div_check):
+            error = error +  "Division or batch has already been allotted here "+ str(div_check)
+        if(room_check):
+            error = error + "Room has been allotted here " + str(room_check)
+        if(all_check):
+            error = error + "Slot might be duplicate Please Check carefully!!" + str(all_check)
+        if((not fac_check) and (not div_check) and (not room_check) and (not all_check)):
+            time_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+            cursor.execute(time_query,(slot_slot,))
+            time_res = cursor.fetchall()[0]
+            update_query = f"INSERT INTO { CURR_YEAR_SEM }(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            update_para = (slot_class,slot_sub,slot_slot,time_res[0],time_res[1],slot_fac,slot_room,slot_batch,slot_type,CURR_BRANCH,slot_div)
+            try:
+                cursor.execute(update_query,update_para)
+                conn.commit()
+                error = f"Successfully Inserted the value inTable { CURR_YEAR_SEM }"
+                complete_table = select_class((slot_class+ " " + slot_div),CURR_BRANCH,CURR_YEAR_SEM)
+                return(jsonify({"error": error,"complete_table": complete_table}),200)
+            except mysql.Error as error:
+                return(jsonify({"error": str(error)}),400)
+        return(jsonify({"error": error}),400)
+        
+
+@app.route("/view_delete_api", methods = ["POST",])
+def view_delete_api():
+    if request.method == "POST":
+        error = ""
+        del_id = request.get_json()
+        delete_id = int(del_id["slot_id"])
+        slot_class = del_id["class"]
+        slot_div = del_id["division"]
+        del_query = f"DELETE FROM { CURR_YEAR_SEM } WHERE id = %s"
+        try:
+            cursor.execute(del_query,(delete_id,))
+            conn.commit()
+            complete_table = select_class((slot_class+ " " + slot_div),CURR_BRANCH,CURR_YEAR_SEM)
+            error = "Successfully deleted!"
+            return(jsonify({"error": error,"complete_table": complete_table}),200)
+        except mysql.Error as error:
+            return(jsonify({"error": str(error)}),400)
+

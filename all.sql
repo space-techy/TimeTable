@@ -5,12 +5,13 @@ CREATE TABLE subjects(
     subclass VARCHAR(500) NOT NULL,
     subsem VARCHAR(500) NOT NULL,
     subcode VARCHAR(500) UNIQUE NOT NULL,
-    subabb VARCHAR(500) UNIQUE NOT NULL,
-    subname VARCHAR(500) UNIQUE NOT NULL,
+    subabb VARCHAR(500) NOT NULL,
+    subname VARCHAR(500) NOT NULL,
     sublecture INT NOT NULL,
     subtut INT NOT NULL,
     subprac INT NOT NULL,
-    subelective VARCHAR(500) NOT NULL
+    subelective VARCHAR(500) NOT NULL,
+    subdep VARCHAR(500) NOT NULL
 );
 
 
@@ -23,7 +24,7 @@ CREATE TABLE faculty(
     facdes VARCHAR(500) NOT NULL,
     facqual VARCHAR(500) NOT NULL,
     facdep VARCHAR(500) NOT NULL,
-    facshdep VARCHAR(500) NOT NULL
+    facshdep VARCHAR(500)
 );
 
 
@@ -34,7 +35,7 @@ CREATE TABLE rooms(
     roomno VARCHAR(100) UNIQUE NOT NULL,
     roomdes VARCHAR(500) NOT NULL,
     roomdep VARCHAR(500) NOT NULL,
-    roomshdep VARCHAR(500) NOT NULL 
+    roomshdep VARCHAR(500) 
 );
 
 -- This table is for timetable slots
