@@ -255,3 +255,13 @@ tr{
 .navbar{
     background-color: #eee !important;
 }
+
+
+.swap-div{
+    height: 35px;
+    width: 200px;
+    border: 2.5px solid black;
+    margin-left: 20px; 
+    text-align:center;
+    padding-top: 7px;
+}

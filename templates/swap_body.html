@@ -1,0 +1,34 @@
+{% extends "index.html" %}
+
+{% block content %}
+
+    {% block swap_nav %}
+    {% endblock swap_nav %}
+
+    <div class="timetable-container" id="time-table" style="margin-top: 2%;">
+        <section class="class-info">
+            <p style="float: left;">{{ infoImpo }}</p>
+            <p style="float: right;">Year:  {{ CURR_YEAR_SEM[-9:-5] }}-{{ CURR_YEAR_SEM[-4:] }} Semester: 
+            {% if CURR_YEAR_SEM[0].upper() == "E" %}
+                EVEN
+            {% else %}
+                ODD
+            {% endif %}
+            </p><br />
+            <p></p>
+            <p style="float: right;">
+                {% if(fac_load)%}
+                    {{ fac_load }}
+                {% endif %}
+            </p>
+        </section>
+        <table class="timetable" id="time-table-shown">
+            {{ timetable | safe }}
+        </table>
+        <p style="float: left;">H.O.D</p>
+        <p style="float: right;">PRINCIPAL</p>
+    </div>
+
+
+
+{% endblock content %}

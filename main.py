@@ -124,27 +124,11 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
     time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     # Now we are working on the part of adding colspan for days
-    day_colspan = {}
-    total_columns = 0
-    for day in days:
-        day_query = f"SELECT batch FROM {CURR_YEAR_SEM} WHERE division = %s AND branch = %s AND day = %s AND batch != 'NO'"
-        day_para = ( course_batch, course_department, day)
-        cursor.execute( day_query, day_para)
-        day_res = cursor.fetchall()
-        if(len(day_res) > 0 ):
-            day_colspan[day] = no_of_div
-            total_columns = total_columns + no_of_div
-        else:
-            day_colspan[day] = 1
-            total_columns = total_columns + 1
     
     # This code is for creating html table head with colspan
     table_head = "<thead><tr><th style='width: 8%;'>Time/Day</th>"
     for day in days:
-        if(day_colspan[day] > 1):
-            table_head = table_head + f"<th colspan={day_colspan[day]}>{day}</th>"
-        else:
-            table_head = table_head + f"<th colspan={day_colspan[day]}>{day}</th>"
+        table_head = table_head + f"<th colspan={no_of_div}>{day}</th>"
     table_head  = table_head + "</tr></thead>"
     # Now we are going to create the body of the table
     check_back_row = {}
@@ -152,7 +136,7 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
     for t in range(len(time_slots)):
         table_body = table_body + f"<tr><td class='timeslot'>{time_slots[t]}</td>"
         if(time_slots[t] == "1:00-2:00"):
-            table_body = table_body + f'<td colspan={total_columns} style="text-align: center;" class="lunch">LUNCH BREAK</td>'
+            table_body = table_body + f'<td colspan={(no_of_div*5)} style="text-align: center;" class="lunch">LUNCH BREAK</td>'
             continue
         for day in days:
             if(time_slots[t] in check_back_row.keys()):
@@ -184,16 +168,21 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
             data_res = cursor.fetchall()
 
             if(len(data_res) == 0):
-                table_body = table_body + f"<td colspan = {day_colspan[day]} class='{daysInDict[day]+str(t+1)}'></td>"
+                table_body = table_body + f"<td colspan = {no_of_div} class='{daysInDict[day]+str(t+1)}'></td>"
                 continue
-            if(len(data_res) > 1):
-                for curr_batch in data_res:
+            if((len(data_res) > 1) or data_res[0][-1] != "NO"):
+                for curr_batch in sorted(data_res, key=(lambda x: x[5])):
                     if(rowspan_or_not):
                         td = f'<td rowspan=2 colspan=1 value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}">{ curr_batch[5] } <br /> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>'
                         table_body = table_body + td
                     else:
                         td = f'<td rowspan=1 colspan=1 value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}">{ curr_batch[5] } <br /> {" "}  { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }</td>'
                         table_body = table_body + td
+                for an in range((no_of_div - len(data_res))):
+                    if(rowspan_or_not):
+                        table_body = table_body + f"<td  rowspan=2 colspan=1 class='{daysInDict[day]+str(t+1)}'></td>"
+                    else:
+                        table_body = table_body + f"<td  rowspan=1 colspan=1 class='{daysInDict[day]+str(t+1)}'></td>"
             else:
                 curr_batch = data_res[0]
                 if(rowspan_or_not):
@@ -1140,6 +1129,8 @@ def show_timetable():
         sel_class = request.form.get("sel_class")
         if(request_type == "edit" and sel_class):
             return redirect(url_for("view_edit",sel_class = sel_class))
+        if(request_type == "swap" and sel_class):
+            return redirect(url_for("view_swap",sel_class = sel_class))
         sel_room = request.form.get("sel_room")
         sel_fac = request.form.get("sel_fac")
         if(sel_class):
@@ -1616,13 +1607,13 @@ def view_edit_check_api():
         room_check = check_data( CURR_YEAR_SEM, room_para=room_para)
         all_check = check_data( CURR_YEAR_SEM, all_para= all_para, fac_para=fac_para, div_para=div_para,room_para=room_para)
         if(fac_check):
-            error = error +  "Faculty has already been allotted here "+ str(fac_check)
+            error = error +  "Faculty has already been allotted here "
         if(div_check):
-            error = error +  "Division or batch has already been allotted here "+ str(div_check)
+            error = error +  "Division or batch has already been allotted here "
         if(room_check):
-            error = error + "Room has been allotted here " + str(room_check)
+            error = error + "Room has been allotted here " 
         if(all_check):
-            error = error + "Slot might be duplicate Please Check carefully!!" + str(all_check)
+            error = error + "Slot might be duplicate Please Check carefully!!"
         if((not fac_check) and (not div_check) and (not room_check) and (not all_check)):
             time_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
             cursor.execute(time_query,(slot_slot,))
@@ -1633,9 +1624,9 @@ def view_edit_check_api():
                 cursor.execute(update_query,update_para)
                 conn.commit()
                 error = f"Successfully Inserted the value inTable { CURR_YEAR_SEM }"
-                complete_table = select_class((slot_class+ " " + slot_div),CURR_BRANCH,CURR_YEAR_SEM)
-                return(jsonify({"error": error,"complete_table": complete_table}),200)
+                return(jsonify({"error": error}),200)
             except mysql.Error as error:
+                conn.rollback()
                 return(jsonify({"error": str(error)}),400)
         return(jsonify({"error": error}),400)
         
@@ -1646,15 +1637,113 @@ def view_delete_api():
         error = ""
         del_id = request.get_json()
         delete_id = int(del_id["slot_id"])
-        slot_class = del_id["class"]
-        slot_div = del_id["division"]
         del_query = f"DELETE FROM { CURR_YEAR_SEM } WHERE id = %s"
         try:
             cursor.execute(del_query,(delete_id,))
             conn.commit()
-            complete_table = select_class((slot_class+ " " + slot_div),CURR_BRANCH,CURR_YEAR_SEM)
             error = "Successfully deleted!"
-            return(jsonify({"error": error,"complete_table": complete_table}),200)
+            return(jsonify({"error": error}),200)
         except mysql.Error as error:
             return(jsonify({"error": str(error)}),400)
 
+
+
+@app.route("/view_swap",methods = ["GET","POST"])
+@login_required
+def view_swap():
+    if request.method == "POST":
+        return redirect("/show_timetable")
+    else:
+        sel_class = request.args.get("sel_class")
+        infoImpo = f"Class: {sel_class}"
+        complete_table = select_class( sel_class, CURR_BRANCH, CURR_YEAR_SEM)
+        return render_template("swap_nav.html",sel_class = sel_class,infoImpo = infoImpo,timetable = complete_table,CURR_YEAR_SEM = CURR_YEAR_SEM)
+    
+
+@app.route("/view_swap_api", methods=["POST"])
+def view_swap_api():
+    if request.method == "POST":
+        # Clear temp_data table
+        cursor.execute("DELETE FROM temp_data")
+        conn.commit()
+
+        error = ""
+        slotsInfo = request.get_json()
+        slot_1 = slotsInfo["slot1"]
+        slot_2 = slotsInfo["slot2"]
+
+        # Select slots to be swapped
+        slot_query = f"""
+            SELECT class, slot, faculty, room, batch, division, subject, id 
+            FROM {CURR_YEAR_SEM} 
+            WHERE id = %s OR id = %s
+        """
+        cursor.execute(slot_query, (slot_1, slot_2))
+        slots_res = cursor.fetchall()
+
+        slot_batch_check = []
+        canInsert = []
+
+        for slot in slots_res:
+            slot_class, slot_slot, slot_fac, slot_room, slot_batch, slot_div, slot_sub, slot_id = slot
+            slot_batch_check.append(slot_batch)
+
+            # Check for batch swap validity
+            if len(slot_batch_check) > 1:
+                if (slot_batch_check[0] != slot_batch_check[1]):
+                    return jsonify({"error": "Swap cannot be done for batch with whole division or batches are different!"}), 400
+
+            # Define parameters for checks
+            div_para = (slot_class, slot_slot, slot_batch, slot_div, CURR_BRANCH)
+            fac_para = (slot_slot, f"%{slot_fac}%")
+            room_para = (slot_slot, slot_room)
+            all_para = (slot_class, slot_sub, slot_slot, slot_fac, slot_room, slot_batch, CURR_BRANCH, slot_div)
+
+            # Perform checks
+            fac_check = check_data(CURR_YEAR_SEM, fac_para=fac_para)
+            div_check = check_data(CURR_YEAR_SEM, div_para=div_para)
+            room_check = check_data(CURR_YEAR_SEM, room_para=room_para)
+            all_check = check_data(CURR_YEAR_SEM, all_para=all_para, fac_para=fac_para, div_para=div_para, room_para=room_para)
+
+            # Handle errors
+            if len(fac_check) > 1:
+                error += "Faculty has already been allotted here. "
+                canInsert = []
+                break
+            if len(div_check) > 1:
+                error += "Division or batch has already been allotted here. "
+                canInsert = []
+                break
+            if len(room_check) > 1:
+                error += "Room has been allotted here. "
+                canInsert = []
+                break
+            if len(all_check) > 1:
+                error += "Slot might be duplicate. Please check carefully! "
+                canInsert = []
+                break
+
+            if not (len(fac_check) > 1) and not (len(div_check) > 1) and not (len(room_check) > 1) and not (len(all_check) > 1):
+                get_time = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+                cursor.execute(get_time,(slot_slot,))
+                time_res  = cursor.fetchall()[0]
+                canInsert.append((slot_slot,time_res[0],time_res[1],slot_id))         
+        if len(canInsert) == 2:
+            id1, id2 = canInsert[0][-1],canInsert[1][-1]
+
+            update_query = f"""
+                UPDATE {CURR_YEAR_SEM} SET slot = %s,day = %s,time = %s
+                WHERE id = %s
+            """
+
+            try:
+                cursor.execute(update_query, (canInsert[0][0],canInsert[0][1],canInsert[0][2],id2))
+                cursor.execute(update_query, (canInsert[1][0],canInsert[1][1],canInsert[1][2],id1))
+                conn.commit()
+                error = "Successfully Swapped!"
+                return jsonify({"error": error}), 200
+            except mysql.Error as errors:
+                conn.rollback()
+                return jsonify({"error": str(errors)}), 400
+        else:
+            return jsonify({"error": error}), 400

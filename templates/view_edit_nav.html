@@ -109,7 +109,6 @@
         .then(response => response.json())
         .then(data => {
             errors = data.error;
-            complete_table = data.complete_table;
             alert(errors);
             location.reload();
         })
@@ -128,7 +127,6 @@
         .then(response => response.json())
         .then(data => {
             errors = data.error;
-            complete_table = data.complete_table;
             console.log(errors);
             alert(errors);
             location.reload();

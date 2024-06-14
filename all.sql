@@ -63,8 +63,8 @@ CREATE TABLE all_timetables(
 
 -- A sample sql code to make year_sem table
 
-CREATE TABLE 'You can give any name'(
-    id NOT NULL,
+CREATE TABLE "your time table name"(
+    id PRIMARY KEY UNIQUE NOT NULL,
     class VARCHAR(250) NOT NULL,
     subject VARCHAR(500) NOT NULL,
     slot VARCHAR(50) NOT NULL,
@@ -74,7 +74,8 @@ CREATE TABLE 'You can give any name'(
     room varchar(250) NOT NULL,
     batch varchar(200) NOT NULL,
     type varchar(100) NOT NULL,
-    branch varchar(250) NOT NULL
+    branch varchar(250) NOT NULL,
+    division varchar(250) not null
 );
 
 
@@ -89,3 +90,20 @@ CREATE TABLE divisions(
     no_of_div INT(10) NOT NULL,
     class VARCHAR(500) NOT NULL
 );
+
+
+
+UPDATE even_2023_2024 AS main
+                JOIN temp_data AS temp ON temp.id = 422
+                SET main.class = temp.class, 
+                    main.subject = temp.subject, 
+                    main.slot = temp.slot, 
+                    main.day = temp.day, 
+                    main.time = temp.time, 
+                    main.faculty = temp.faculty, 
+                    main.room = temp.room, 
+                    main.batch = temp.batch, 
+                    main.type = temp.type, 
+                    main.branch = temp.branch, 
+                    main.division = temp.division
+                WHERE main.id = 421

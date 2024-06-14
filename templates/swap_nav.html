@@ -1,0 +1,68 @@
+{% extends "swap_body.html" %}
+
+{% block swap_nav %}
+<nav class="navbar navbar-expand-lg bg-body-tertiary" style="height: 5% !important; padding-top: 1%; padding-bottom: 1.5%;">
+    <div class="container-fluid" style="justify-content: center !important;">
+        <div id="slot1" class="swap-div" ondrop="addValue(event, 'slot1')" ondragover="allowDrop(event)"></div>
+        <button id="swapButton" style="margin-right: 50px;margin-left: 50px;" onclick="swapValues()">Swap</button>
+        <div id="slot2" class="swap-div" ondrop="addValue(event, 'slot2')" ondragover="allowDrop(event)"></div>
+    </div>
+</nav>
+
+<script>
+    var valuesOfTD = {};
+
+    function allowDrop(event) {
+        event.preventDefault();
+    }
+
+    function addValue(event, slotId) {
+        event.preventDefault();
+        var data = event.dataTransfer.getData("text/plain");
+        var draggedElement = document.getElementById(data);
+        var slot = document.getElementById(slotId);
+        slot.innerText = draggedElement.innerText;
+        valuesOfTD[slotId] = draggedElement.dataset.value; // Use dataset.value to get the stored value
+        console.log(valuesOfTD);
+    }
+
+    function dragValue(event) {
+        event.dataTransfer.setData("text/plain", event.target.id);
+    }
+
+    function swapValues() {
+        if(valuesOfTD["slot1"] == valuesOfTD["slot2"]){
+            alert("Same slots were selected!");
+            location.reload();
+        } else {
+            const sendSwapBody = JSON.stringify(valuesOfTD);
+
+            fetch("/view_swap_api",{
+                method: "POST",
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: sendSwapBody
+            })
+            .then(response => response.json())
+            .then(data =>{
+                errors = data.error;
+                alert(errors);
+                location.reload();
+            })
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const tdData = document.getElementsByTagName("td");
+        for (let td of tdData) {
+            if (td.innerText) {
+                td.draggable = true;
+                td.id = "draggable-" + Math.random().toString(36).substr(2, 9); // Assign a unique ID
+                td.dataset.value = td.getAttribute("value"); // Store the value in a data attribute
+                td.addEventListener('dragstart', dragValue);
+            }
+        }
+    });
+</script>
+{% endblock swap_nav %}
