@@ -1664,9 +1664,6 @@ def view_swap():
 def view_swap_api():
     if request.method == "POST":
         # Clear temp_data table
-        cursor.execute("DELETE FROM temp_data")
-        conn.commit()
-
         error = ""
         slotsInfo = request.get_json()
         slot_1 = slotsInfo["slot1"]
