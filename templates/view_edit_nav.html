@@ -39,11 +39,12 @@
                     {% endfor %}
                     <!-- Add other batch options here -->
                 </select>
-                <label for="batch">Batch :</label>
+                <label for="batch">Type :</label>
                 <select style="margin-left: 5px; margin-right: 5px;" id="batch" name="type" onchange="addToData(this)">
                     <option selected disabled>Select</option>
                     <option value="L">L</option>
                     <option value="P">P</option>
+                    <option value="T">T</option>
                 </select>
             </div>
             <button type="submit" onclick="checkInsertDataLength()">Submit</button>

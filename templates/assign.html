@@ -78,6 +78,7 @@
                     </div>
                     <div class="form-buttons">
                         <button type="submit" class="btn assign-theory" name="submit-button" value="L">Assign Theory</button>
+                        <button type="submit" class="btn assign-practical" name="submit-button" value="T" style="background-color:brown !important;">Assign Tutorial</button>
                         <button type="submit" class="btn assign-practical" name="submit-button" value="P">Assign Practical</button>
                     </div>
                 </form>
@@ -170,7 +171,7 @@
                 const room = document.getElementById("room");
                 const faculty = document.getElementById("faculty");
                 const batch = document.getElementById("batch");
-
+                
                 // Clear old options
                 division.innerHTML = "<option selected disabled>Select</option>";
                 subject.innerHTML = "<option selected disabled>Select</option>";
@@ -182,6 +183,8 @@
                 const sub_res = data.subjects;
                 const room_res = data.rooms;
                 const fac_res = data.faculty;
+
+                console.log(sub_res);
 
                 div_res.forEach((div) => {
                     const newOption = document.createElement("option");

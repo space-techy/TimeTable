@@ -64,10 +64,6 @@
                                             <td>
                                                 <label>{{ slot[2] }}</label>
                                                 <input type="text" name="subject_bef" value="{{ slot[2] }}" hidden>
-                                                <select class="subject-select" name="subject">
-                                                    <option selected value="">Select Subject</option>
-                                                    <!-- Add other subject options here -->
-                                                </select>
                                             </td>
                                             <td>
                                                 <label>{{ slot[3] }}</label>
@@ -96,7 +92,7 @@
                                             <td>
                                                 <label>{{ slot[9] }}</label>
                                                 <br />
-                                                <input type="text" name="sub_type" value="{{ slot[9] }}" style="width: 75px;" />
+                                                <input type="text" name="sub_type" value="{{ slot[9] }}" style="width: 75px;" hidden/>
                                             </td>
                                         </tr>
                                     {% endfor %}
@@ -133,7 +129,6 @@
                 .then(response => response.json())
                 .then(data => {
                     const division = row.querySelector('.division-select');
-                    const subject = row.querySelector('.subject-select');
                     const room = row.querySelector('.room-select');
                     const faculty = row.querySelector('.faculty-select');
                     const batch = row.querySelector('.batch-select');
@@ -145,7 +140,6 @@
 
                     // Clear previous options
                     division.innerHTML = '<option selected value="">Select Division</option>';
-                    subject.innerHTML = '<option selected value="">Select Subject</option>';
                     room.innerHTML = '<option selected value="">Select Room</option>';
                     faculty.innerHTML = '<option selected value="">Select Faculty</option>';
                     batch.innerHTML = '<option selected value="">Select Batch</option><option value="NO">NO</option>'
@@ -171,12 +165,6 @@
                                 }
                             }
                         });
-                    });
-
-                    subRes.forEach((sub) => {
-                        const newOption = document.createElement("option");
-                        newOption.text = sub;
-                        subject.appendChild(newOption);
                     });
 
                     roomRes.forEach((rooma) => {

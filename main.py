@@ -52,11 +52,6 @@ def load_user():
     global CURR_BRANCH
     CURR_BRANCH = session.get("username")
 
-    
-
-
-
-
 
 def check_data(imp_year_sem,div_para = None,all_para = None,fac_para = None,room_para = None):
     check_div_query = f"SELECT * FROM { imp_year_sem }  WHERE class = %s AND slot = %s AND batch = %s AND division = %s AND branch = %s"
@@ -105,6 +100,35 @@ def check_data(imp_year_sem,div_para = None,all_para = None,fac_para = None,room
         else:
             return False
         
+def checkSubject(imp_year_sem,branchInto,subject,batch,type_sub,division):
+    # Type checking whether there are enough lectures,practicals or tutorials available to add or not
+    sub_data_get_query = "SELECT sublecture,subtut,subprac FROM subjects WHERE subabb = %s"
+    sub_data_para = (subject,)
+    cursor.execute(sub_data_get_query,sub_data_para)
+    sub_res = cursor.fetchall()[0]
+    sub_lec,sub_tut,sub_prac = sub_res[0],sub_res[1],sub_res[2]
+    sub_check_query = f"SELECT COUNT(type) FROM {imp_year_sem} WHERE division = %s AND batch = %s AND subject = %s AND branch = %s AND type = %s"
+    sub_check_para_l = (division,batch,subject,branchInto,type_sub)
+    cursor.execute(sub_check_query,sub_check_para_l)
+    sub_check_res = cursor.fetchall()[0][0]
+    if("L" in  type_sub):
+        if(sub_check_res >= sub_lec):
+            errorin = f"Cannot add more lectures as for this {subject} lectures quota is filled!"
+            return errorin
+    if("P" in type_sub):
+        if(sub_check_res >= sub_prac):
+            errorin = f"Cannot add more practicals as for this {subject} practicals quota is filled!"
+            return errorin
+    if("T" in type_sub):
+        if(sub_check_res >= sub_tut):
+            errorin = f"Cannot add more tutorials as for this {subject} tutorials quota is filled!"
+            return errorin
+    return False
+
+
+
+
+
 
 
 def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
@@ -345,8 +369,8 @@ def login_page():
             user_log = User(result[0][1])
             department_name = result[0][3]
             login_user(user_log)
-            session["username"] = username
-            session["department"] = department_name
+            session["username"] = username.upper()
+            session["department"] = department_name.title()
             session.permanent = True
             app.permanent_session_lifetime = timedelta(minutes=30)
             return redirect("/")
@@ -370,7 +394,7 @@ def register_page():
         college_name = request.form.get("college_name")
         #This is to insert User Info into Database
         user_reg = "INSERT INTO users(username,email_id,user_password,college_name,department_name) VALUES (%s,%s,%s,%s,%s)"
-        param = (username,email_id,password,college_name,department_name)
+        param = (username.upper(),email_id,password,college_name,department_name)
         try:
             cursor.execute(user_reg,param)
             conn.commit()
@@ -379,8 +403,8 @@ def register_page():
             cursor.execute(user_id_reg,(username,))
             cur_res = (cursor.fetchall())[0][0]
             user_res = User(cur_res)
-            session["username"] = username
-            session["department"] = department_name
+            session["username"] = username.upper()
+            session["department"] = department_name.title()
             login_user(user_res)
             return redirect("/")
         except:
@@ -678,7 +702,7 @@ def get_div():
     if request.method == "POST":
         sel_class = request.get_json()
         sel_class = sel_class["sel_class"]
-        sub_query = f"SELECT subabb FROM subjects WHERE subclass = %s AND subsem = %s"
+        sub_query = f"SELECT subabb FROM subjects WHERE subsem = %s AND subclass LIKE %s"
         div_query = f"SELECT batch,no_of_div FROM divisions WHERE class = %s"
         room_query = f"SELECT roomno FROM rooms"
         faculty_query = f"SELECT facinit FROM faculty"
@@ -686,7 +710,7 @@ def get_div():
             subsem = "ODD"
         else:
             subsem = "EVEN"
-        sub_para = (sel_class, subsem)
+        sub_para = (subsem, f"%{sel_class}%")
         div_para = (sel_class,)
         cursor.execute(sub_query,sub_para)
         sub_res = cursor.fetchall()
@@ -753,8 +777,6 @@ def rem_slot():
 @app.route("/assign_slots", methods=["GET","POST"])
 @login_required
 def assign_slots():
-    global CURR_BRANCH
-    global CURR_YEAR_SEM
     if request.method == "POST":
         college_class = request.form.get("class")
         division = request.form.get("division")
@@ -765,6 +787,22 @@ def assign_slots():
         batch = request.form.get("batch")
         slots = request.form.getlist("slots")
         type_submit = request.form.get("submit-button")
+
+        cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
+        subelective = cursor.fetchall()[0][0]
+        if(subelective == "YES"):
+            if(batch != "NO"):
+                errorin = "Elective subjects can only be added for whole divisions and not for batches"
+                return redirect(url_for("assign_slots", error = errorin))
+            type_sub = "E".strip() + type_submit.strip()
+        else:
+            type_sub = type_submit
+
+        check_res = checkSubject(CURR_YEAR_SEM,CURR_BRANCH,subject,batch,type_sub,division)
+
+        if(check_res):
+            redirect(url_for("assign_slots", error = check_res))
+
         check_query = f"SELECT * FROM { CURR_YEAR_SEM }  WHERE class = %s AND slot = %s AND batch = %s AND division = %s AND branch = %s"
         if(len(slots) > 1):
             for slot in slots:
@@ -803,12 +841,6 @@ def assign_slots():
                         search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
                         cursor.execute(search_query, (slot,))
                         time_slots = cursor.fetchall()[0]
-                        cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
-                        subelective = cursor.fetchall()
-                        if(subelective == "YES"):
-                            type_sub = "E".strip() + type_submit.strip()
-                        else:
-                            type_sub = type_submit
                         insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],curr_fac,room, batch, type_sub, CURR_BRANCH,division)
                         insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
                         try:
@@ -829,12 +861,6 @@ def assign_slots():
                     search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
                     cursor.execute(search_query, (slots,))
                     time_slots = cursor.fetchall()[0]
-                    cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
-                    subelective = cursor.fetchall()
-                    if(subelective == "YES"):
-                        type_sub = "E".strip() + type_submit.strip()
-                    else:
-                        type_sub = type_submit
                     insert_para = (college_class,subject,slots,time_slots[0],time_slots[1],curr_fac,room, batch, type_sub, CURR_BRANCH,division)
                     insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
                     try:
@@ -856,12 +882,6 @@ def assign_slots():
                     search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
                     cursor.execute(search_query, (slot,))
                     time_slots = cursor.fetchall()[0]
-                    cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
-                    subelective = cursor.fetchall()
-                    if(subelective == "YES"):
-                        type_sub = "E".strip() + type_submit.strip()
-                    else:
-                        type_sub = type_submit
                     insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
                     insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
                     try:
@@ -881,12 +901,6 @@ def assign_slots():
                 search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
                 cursor.execute(search_query, (slots[0],))
                 time_slots = cursor.fetchall()[0]
-                cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
-                subelective = cursor.fetchall()
-                if(subelective == "YES"):
-                    type_sub = "E".strip() + type_submit.strip()
-                else:
-                    type_sub = type_submit
                 insert_para = (college_class,subject,slots[0],time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
                 insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
                 try:
@@ -920,12 +934,6 @@ def assign_slots():
                 search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
                 cursor.execute(search_query, (slot,))
                 time_slots = cursor.fetchall()[0]
-                cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
-                subelective = cursor.fetchall()
-                if(subelective == "YES"):
-                    type_sub = "E".strip() + type_submit.strip()
-                else:
-                    type_sub = type_submit
                 insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
                 insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
                 try:
@@ -957,12 +965,6 @@ def assign_slots():
             search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
             cursor.execute(search_query, (slots[0],))
             time_slots = cursor.fetchall()[0]
-            cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
-            subelective = cursor.fetchall()[0]
-            if(subelective == "YES"):
-                type_sub = "E".strip() + type_submit.strip()
-            else:
-                type_sub = type_submit
             insert_para = (college_class,subject,slots[0],time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
             insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
             try:
@@ -983,8 +985,8 @@ def assign_slots():
         slots_res = cursor.fetchall()
         cursor.execute(input_class_query, input_class_para)
         input_class_res = cursor.fetchall()
-        query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM } ORDER BY ID DESC"
-        cursor.execute(query)
+        query = f"SELECT id,class,subject,slot,day,time,faculty,room,division,batch,type FROM { CURR_YEAR_SEM } WHERE branch = %s ORDER BY ID DESC"
+        cursor.execute(query,(CURR_BRANCH,))
         results = cursor.fetchall()
         return render_template("assign.html", CURR_YEAR_SEM = CURR_YEAR_SEM, results = results,slots_res = slots_res, input_class_res = input_class_res,error = error)
     
@@ -1006,30 +1008,28 @@ def show_timetable():
             show_class = f"Class: {sel_class}"
             complete_table = select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM)
             class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
-            room_query = "SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
-            fac_query = "SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
+            room_query = "SELECT roomno FROM rooms"
+            fac_query = "SELECT facinit FROM faculty"
             class_para = (CURR_BRANCH,)
-            room_fac_para = (f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%")
             cursor.execute(class_query, class_para)
             class_res = cursor.fetchall()
-            cursor.execute(room_query, room_fac_para)
+            cursor.execute(room_query)
             room_res = cursor.fetchall()
-            cursor.execute(fac_query, room_fac_para)
+            cursor.execute(fac_query)
             fac_res = cursor.fetchall()
             return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, class_res = class_res, room_res = room_res, fac_res = fac_res,infoImpo = show_class,timetable = complete_table)
         elif(sel_room):
             show_room = f"Room: {sel_room}"
             complete_table = select_room(sel_room,CURR_BRANCH,CURR_YEAR_SEM)
             class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
-            room_query = "SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
-            fac_query = "SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
+            room_query = "SELECT roomno FROM rooms"
+            fac_query = "SELECT facinit FROM faculty"
             class_para = (CURR_BRANCH,)
-            room_fac_para = (f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%")
             cursor.execute(class_query, class_para)
             class_res = cursor.fetchall()
-            cursor.execute(room_query, room_fac_para)
+            cursor.execute(room_query)
             room_res = cursor.fetchall()
-            cursor.execute(fac_query, room_fac_para)
+            cursor.execute(fac_query)
             fac_res = cursor.fetchall()
             return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, class_res = class_res, room_res = room_res, fac_res = fac_res,infoImpo = show_room,timetable = complete_table)
         elif(sel_fac):
@@ -1037,55 +1037,53 @@ def show_timetable():
             fac_load = ""
             complete_table = select_faculty(sel_fac,CURR_BRANCH,CURR_YEAR_SEM)
             class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
-            room_query = "SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
-            fac_query = "SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
+            room_query = "SELECT roomno FROM rooms"
+            fac_query = "SELECT facinit FROM faculty"
             class_para = (CURR_BRANCH,)
-            room_fac_para = (f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%")
             cursor.execute(class_query, class_para)
             class_res = cursor.fetchall()
-            cursor.execute(room_query, room_fac_para)
+            cursor.execute(room_query)
             room_res = cursor.fetchall()
-            cursor.execute(fac_query, room_fac_para)
+            cursor.execute(fac_query)
             fac_res = cursor.fetchall()
             show_fac_query = "SELECT facname FROM faculty WHERE facinit = %s"
             show_fac_para = (sel_fac,)
             cursor.execute(show_fac_query, show_fac_para)
             show_fac_res = cursor.fetchall()
             show_faculty = f"Faculty: {show_fac_res[0][0]} ({sel_fac})"
-            load_fac_query = f"SELECT sublecture,subtut,subprac FROM subjects WHERE subabb IN (SELECT subject FROM { CURR_YEAR_SEM } WHERE faculty = %s)"
-            cursor.execute(load_fac_query,show_fac_para)
-            load_fac_res = cursor.fetchall()
-            lec_load,tut_load,prac_load,total_load = 0,0,0,0
-            for load in load_fac_res:
-                lec_load = lec_load + load[0]
-                tut_load = tut_load + load[1]
-                prac_load = prac_load + load[2]
+            lec_load_query = f"SELECT COUNT(type) FROM {CURR_YEAR_SEM} WHERE faculty = %s AND type LIKE '%L%'"
+            prac_load_query = f"SELECT COUNT(type) FROM {CURR_YEAR_SEM} WHERE faculty = %s AND type LIKE '%P%'"
+            tut_load_query = f"SELECT COUNT(type) FROM {CURR_YEAR_SEM} WHERE faculty = %s AND type LIKE '%T%'"
+            cursor.execute(prac_load_query,(sel_fac,))
+            lec_load = cursor.fetchall()[0][0]
+            cursor.execute(lec_load_query,(sel_fac,))
+            prac_load = cursor.fetchall()[0][0]
+            cursor.execute(tut_load_query,(sel_fac,))
+            tut_load = cursor.fetchall()[0][0]
             total_load = lec_load + tut_load + prac_load
             fac_load = f"Theory: {lec_load} Tutorial: {tut_load} Practical: {prac_load} Total Load: {total_load}"
             return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, class_res = class_res, room_res = room_res, fac_res = fac_res,infoImpo = show_faculty,fac_load = fac_load,timetable = complete_table)
         class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
-        room_query = "SELECT roomno FROM rooms WHERE roomdep LIKE %s OR roomshdep LIKE %s"
-        fac_query = "SELECT facinit FROM faculty WHERE facdep LIKE %s OR facshdep LIKE %s"
+        room_query = "SELECT roomno FROM rooms"
+        fac_query = "SELECT facinit FROM facultys"
         class_para = (CURR_BRANCH,)
-        room_fac_para = (f"%{CURR_BRANCH}%",f"%{CURR_BRANCH}%")
         cursor.execute(class_query, class_para)
         class_res = cursor.fetchall()
-        cursor.execute(room_query, room_fac_para)
+        cursor.execute(room_query)
         room_res = cursor.fetchall()
-        cursor.execute(fac_query, room_fac_para)
+        cursor.execute(fac_query)
         fac_res = cursor.fetchall()
         return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, class_res = class_res, room_res = room_res, fac_res = fac_res)
     else:
         class_query = "SELECT DISTINCT(class),batch FROM divisions WHERE department = %s"
-        room_query = "SELECT roomno FROM rooms WHERE roomdep = %s OR roomshdep = %s"
-        fac_query = "SELECT facinit FROM faculty WHERE facdep = %s OR facshdep = %s"
+        room_query = "SELECT roomno FROM rooms"
+        fac_query = "SELECT facinit FROM faculty"
         class_para = (CURR_BRANCH,)
-        room_fac_para = (CURR_BRANCH,CURR_BRANCH)
         cursor.execute(class_query, class_para)
         class_res = cursor.fetchall()
-        cursor.execute(room_query, room_fac_para)
+        cursor.execute(room_query)
         room_res = cursor.fetchall()
-        cursor.execute(fac_query, room_fac_para)
+        cursor.execute(fac_query)
         fac_res = cursor.fetchall()
         return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, class_res = class_res, room_res = room_res, fac_res = fac_res)
     
@@ -1161,10 +1159,14 @@ def change_slots():
         slot_class = request.form.getlist("class")[curr_row] or request.form.getlist("class_bef")[curr_row]
         slot_div = request.form.getlist("division")[curr_row] or request.form.getlist("division_bef")[curr_row]
         slot_batch = request.form.getlist("batch")[curr_row] or request.form.getlist("batch_bef")[curr_row]
-        slot_sub = request.form.getlist("subject")[curr_row] or request.form.getlist("subject_bef")[curr_row]
+        slot_sub = request.form.getlist("subject_bef")[curr_row]
         slot_fac = request.form.getlist("faculty")[curr_row] or request.form.getlist("faculty_bef")[curr_row]
         slot_room = request.form.getlist("room")[curr_row] or request.form.getlist("room_bef")[curr_row]
         slot_slot = request.form.getlist("slot")[curr_row] or request.form.getlist("slots_bef")[curr_row]
+        print(request.form.getlist("sub_type"))
+        print(request.form.get("sub_type"))
+        slot_type = request.form.getlist("sub_type")[curr_row]
+
 
 
         slot_sub_type = request.form.getlist("sub_type")[curr_row]
@@ -1198,6 +1200,12 @@ def change_slots():
         if((request.form.getlist("slot")[curr_row] != request.form.getlist("slot")[curr_row] ) and (request.form.getlist("slot")[curr_row] != "")):
             change_slot
                 
+        if(change_batch and ("E" in slot_type)):
+            if(slot_batch != "NO"):
+                error = "Subject is elective so batches are not allowed!"
+                return redirect(url_for("edit_slots",error = error,slots_edit = slot_id))
+                
+
 
         if((not change_class) and (not change_div) and (not change_batch) and (not change_fac) and (not change_room) and (change_slot)):
             all_para = ( slot_class, slot_sub, slot_slot, slot_fac, slot_room, slot_batch, CURR_BRANCH, slot_div)
@@ -1209,7 +1217,6 @@ def change_slots():
                 update_slot_query = f"UPDATE { CURR_YEAR_SEM } SET class = %s, division = %s ,batch = %s, subject = %s, faculty = %s, room = %s, slot = %s, day = %s, time = %s, type = %s WHERE id = %s"
                 update_slot_para = ( slot_class, slot_div, slot_batch, slot_sub, slot_fac, slot_room, slot_slot,time_res[0],time_res[1],slot_sub_type, curr_slot_id)
                 try:
-                    print("Faculty here or not",slot_fac)
                     cursor.execute(update_slot_query, update_slot_para)
                 except mysql.Error as error:
                     conn.rollback()
@@ -1463,6 +1470,22 @@ def view_edit_check_api():
         slot_batch = slot_info["batch"]
         slot_slot = slot_info["slot"]
         slot_type = slot_info["type"]
+
+        cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (slot_sub,))
+        subelective = cursor.fetchall()[0][0]
+        if(subelective == "YES"):
+            if(slot_batch != "NO"):
+                error = "Elective subjects can only be added for whole divisions and not for batches"
+                return(jsonify({"error": error}),400)
+            type_sub = "E".strip() + slot_type.strip()
+        else:
+            type_sub = slot_type
+
+        
+        check_res = checkSubject(CURR_YEAR_SEM,CURR_BRANCH,slot_sub,slot_batch,type_sub,slot_div)
+
+        if(check_res):
+            return(jsonify({"error": check_res}),400)
 
         # To check for all the clashes
         # All parameters first

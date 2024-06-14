@@ -47,7 +47,6 @@
   {% block timeshow %}
   {% endblock timeshow %}
 
-
 <script>
   
 function showColor(element) {
@@ -122,29 +121,6 @@ function showColor(element) {
         }
     }
 }
-
-  
-
-
-
-
-
-  async function downloadPDF(){
-    
-    const { jsPDF } = window.jspdf;
-
-    const canvas = await html2canvas(document.getElementById("timetsable"));
-    const imgData = canvas.toDataURL('image/png');
-
-    const pdf = new jsPDF();
-    // Add the image data to the PDF
-    pdf.addImage(imgData, 'PNG', 10, 10, 190, 0); // Adjust dimensions as needed
-
-    // Save the PDF
-    pdf.save("Timetable.pdf");
-
-  }
-
 
 
 </script>
