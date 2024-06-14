@@ -126,8 +126,19 @@ def checkSubject(imp_year_sem,branchInto,subject,batch,type_sub,division):
     return False
 
 
-
-
+def addElective(imp_year_sem,slot,room,faculty):
+    error = ""
+    fac_para = (slot,f"%{faculty}%")
+    room_para = (slot,room)
+    check_fac = check_data( imp_year_sem, fac_para=fac_para)
+    check_room = check_data( imp_year_sem, room_para=room_para)
+    if(check_fac):
+        error = error + f"Faculty {faculty} is already allotted for the slot! \n"
+    if(check_room):
+        error = error + f"Room {room} is already allotted for the slot! \n"
+    if((not check_fac) and (not check_room)):
+        return False
+    return error
 
 
 
@@ -803,6 +814,38 @@ def assign_slots():
         if(check_res):
             redirect(url_for("assign_slots", error = check_res))
 
+        if("E" in type_sub):
+            if(len(mult_faculty) > 0):
+                faculty = faculty.strip() + "/" + mult_faculty.strip()
+                fac_list = []
+                fac_index = 0
+                for j in range(len(faculty)):
+                    if(faculty[j] == "/"):
+                        fac_list.append(faculty[fac_index:j])
+                        fac_index = j + 1
+                fac_list.append(faculty[fac_index:])
+                fac_mult = faculty
+                faculty = fac_list
+            for curr_fac in fac_list:
+                for slot in slots:
+                    can_add_or_not = addElective(CURR_YEAR_SEM,slot,room,faculty)
+                    if(can_add_or_not):
+                        conn.rollback()
+                        return redirect(url_for("assign_slots", error = can_add_or_not))
+            for slot in slots:
+                search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+                cursor.execute(search_query, (slot,))
+                time_slots = cursor.fetchall()[0]
+                insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],fac_mult,room, batch, type_sub, CURR_BRANCH,division)
+                update_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
+                try:
+                    cursor.execute(update_query,insert_para)
+                except mysql.Error as error:
+                    return redirect(url_for("assign_slots", error = error))
+            conn.commit()
+            error = "Successfully Inserted Slot!"
+            return redirect(url_for("assign_slots", error = error))
+                
         check_query = f"SELECT * FROM { CURR_YEAR_SEM }  WHERE class = %s AND slot = %s AND batch = %s AND division = %s AND branch = %s"
         if(len(slots) > 1):
             for slot in slots:
@@ -838,17 +881,17 @@ def assign_slots():
                         if(len(fac_res >= 1)):
                             errorin = "Faculty is already alloted for that slot!"
                             return redirect(url_for("assign_slots", error = errorin))
-                        search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
-                        cursor.execute(search_query, (slot,))
-                        time_slots = cursor.fetchall()[0]
-                        insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],curr_fac,room, batch, type_sub, CURR_BRANCH,division)
-                        insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
-                        try:
-                            cursor.execute(insert_query,insert_para)
-                            conn.commit()
-                        except:
-                            errorin = "Some problem Arised please check the fields again while submitting!"
-                            return redirect(url_for("assign_slots", error = errorin))
+                for slot in slots:
+                    search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+                    cursor.execute(search_query, (slot,))
+                    time_slots = cursor.fetchall()[0]
+                    insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
+                    insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
+                    try:
+                        cursor.execute(insert_query,insert_para)
+                        conn.commit()
+                    except mysql.Error as error:
+                        return redirect(url_for("assign_slots", error = error))
             else:
                 for curr_fac in fac_list:
                     fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND (faculty  LIKE  %s)"
@@ -858,17 +901,16 @@ def assign_slots():
                     if(len(fac_res) >= 1):
                         errorin = "Faculty is already alloted for that slot!"
                         return redirect(url_for("assign_slots", error = errorin))
-                    search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
-                    cursor.execute(search_query, (slots,))
-                    time_slots = cursor.fetchall()[0]
-                    insert_para = (college_class,subject,slots,time_slots[0],time_slots[1],curr_fac,room, batch, type_sub, CURR_BRANCH,division)
-                    insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
-                    try:
-                        cursor.execute(insert_query,insert_para)
-                        conn.commit()
-                    except:
-                        errorin = "Some problem Arised please check the fields again while submitting!"
-                        return redirect(url_for("assign_slots", error = errorin))
+                search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+                cursor.execute(search_query, (slots,))
+                time_slots = cursor.fetchall()[0]
+                insert_para = (college_class,subject,slots,time_slots[0],time_slots[1],curr_fac,room, batch, type_sub, CURR_BRANCH,division)
+                insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
+                try:
+                    cursor.execute(insert_query,insert_para)
+                    conn.commit()
+                except mysql.Error as error:
+                    return redirect(url_for("assign_slots", error = error))
         else:
             if(len(slots) > 1):
                 for slot in slots:
@@ -887,9 +929,8 @@ def assign_slots():
                     try:
                         cursor.execute(insert_query,insert_para)
                         conn.commit()
-                    except:
-                        errorin = "Some problem Arised please check the fields again while submitting!"
-                        return redirect(url_for("assign_slots", error = errorin))
+                    except mysql.Error as error:
+                        return redirect(url_for("assign_slots", error = error))
             else:
                 fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND  faculty = %s"
                 fac_para = (slots[0],faculty)
@@ -907,9 +948,8 @@ def assign_slots():
                     cursor.execute(insert_query,insert_para)
                     conn.commit()
                     return redirect("/assign_slots")
-                except:
-                    errorin = "Some problem Arised please check the fields again while submitting!"
-                    return redirect(url_for("assign_slots", error = errorin))
+                except mysql.Error as error:
+                    return redirect(url_for("assign_slots", error = error))
             return redirect("/assign_slots")
         if(len(slots) > 1):
             for slot in slots:
@@ -940,9 +980,8 @@ def assign_slots():
                     cursor.execute(insert_query,insert_para)
                     conn.commit()
                     return redirect("/assign_slots")
-                except:
-                    errorin = "Some problem Arised please check the fields again while submitting!"
-                    return redirect(url_for("assign_slots", error = errorin))
+                except mysql.Error as error:
+                    return redirect(url_for("assign_slots", error = error))
         else:
             room_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE room = %s AND slot = %s"
             room_para = (room,slots[0])
@@ -971,9 +1010,8 @@ def assign_slots():
                 cursor.execute(insert_query,insert_para)
                 conn.commit()
                 return redirect("/assign_slots")
-            except:
-                errorin = "Some Problem has arised please check input fields  or data again!"
-                return redirect(url_for("assign_slots", error = errorin))
+            except mysql.Error as error:
+                return redirect(url_for("assign_slots", error = error))
     else:
         error = request.args.get("error")
         if(error is None):
