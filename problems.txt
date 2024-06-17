@@ -1,3 +1,0 @@
-You can add batches if there is already a whole division this should not happen! if once a division is added you cannot add batch with it
-
-You have to make sure that if an elective is added for a slot only electives can be added for the slot also make sure that batches cannot be added
