@@ -153,11 +153,16 @@
 
                     division.addEventListener("change", (event) => {
                         const selBatch = event.target.value;
+                        if(selBatch.length >= 2){
+                            var add_symbol = "-";
+                        } else {
+                            var add_symbol = "";
+                        }
                         batch.innerHTML = '<option selected value="">Select Batch</option><option value="NO">NO</option>'
                         divRes.forEach((div) => {
                             if (selBatch === div[0]) {
                                 for (let k = 0; k < div[1]; k++) {
-                                    const curBatch = div[0] + String(k + 1);
+                                    const curBatch = div[0] + add_symbol +String(k + 1);
                                     const newOption = document.createElement("option");
                                     newOption.text = curBatch;
                                     newOption.value = curBatch;

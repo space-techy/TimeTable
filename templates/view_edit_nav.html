@@ -7,7 +7,7 @@
         {# <form action="/view_edit" method="post"> #}
             <div class="container-fluid">
                 <input type="hidden" name="class" value="{{div_class}}">
-                <input type="hidden" name="division" value='{{sel_class.strip(" ")[-1]}}'>
+                <input type="hidden" name="division" value='{{sel_class.split(" ")[-1]}}'>
                 <label for="subject">Subject :</label>
                 <select style="margin-left: 5px; margin-right: 5px;" id="subject" name="subject" onclick="add" onchange="addToData(this)">
                     <option selected disabled>Select</option>

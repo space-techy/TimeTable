@@ -100,17 +100,20 @@ def check_data(imp_year_sem,div_para = None,all_para = None,fac_para = None,room
         else:
             return False
         
-def checkSubject(imp_year_sem,branchInto,subject,batch,type_sub,division):
+def checkSubject(imp_year_sem,branchInto,subject,batch,type_sub,division,slot_class):
     # Type checking whether there are enough lectures,practicals or tutorials available to add or not
-    sub_data_get_query = "SELECT sublecture,subtut,subprac FROM subjects WHERE subabb = %s"
-    sub_data_para = (subject,)
+    sub_data_get_query = "SELECT sublecture,subtut,subprac FROM subjects WHERE subabb = %s AND subclass = %s"
+    sub_data_para = (subject,slot_class)
     cursor.execute(sub_data_get_query,sub_data_para)
     sub_res = cursor.fetchall()[0]
     sub_lec,sub_tut,sub_prac = sub_res[0],sub_res[1],sub_res[2]
+    print(sub_lec,sub_tut,sub_prac)
     sub_check_query = f"SELECT COUNT(type) FROM {imp_year_sem} WHERE division = %s AND batch = %s AND subject = %s AND branch = %s AND type = %s"
     sub_check_para_l = (division,batch,subject,branchInto,type_sub)
     cursor.execute(sub_check_query,sub_check_para_l)
-    sub_check_res = cursor.fetchall()[0][0]
+    sub_check_res = cursor.fetchall()
+    print(sub_check_res)
+    sub_check_res = sub_check_res[0][0]
     if("L" in  type_sub):
         if(sub_check_res >= sub_lec):
             errorin = f"Cannot add more lectures as for this {subject} lectures quota is filled!"
@@ -144,9 +147,10 @@ def addElective(imp_year_sem,slot,room,faculty):
 
 def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
     daysInDict = { "Monday" :'A' ,"Tuesday" : 'B', "Wednesday" : "C" , "Thursday": 'D', "Friday" : 'E'}
-    course_year = sel_class[0:2]
-    course_batch = sel_class[-1]
-    course = sel_class[3:10]
+    course_year = sel_class.split(" ")[0]
+    course_batch = sel_class.split(" ")[-1]
+    course = " ".join(sel_class.split(" ")[1:-2])
+    course_class= course_year + " " + " ".join(sel_class.split(" ")[1:-1])
     course_department = CURR_BRANCH
     div_para = (course_year, course,course_department,course_batch)
     div_query = "SELECT no_of_div FROM divisions WHERE year = %s AND course = %s AND department = %s AND batch = %s"
@@ -162,15 +166,16 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
     max_colspan_day = {"Monday": no_of_div,"Tuesday": no_of_div, "Wednesday" : no_of_div,"Thursday": no_of_div,"Friday": no_of_div}
     for t in time_slots:
         for day in days:
-            max_colspan_query = f"SELECT COUNT(*) FROM {CURR_YEAR_SEM} WHERE day = %s AND time = %s"
-            max_colspan_para = (day,t)
+            max_colspan_query = f"SELECT COUNT(*) FROM {CURR_YEAR_SEM} WHERE day = %s AND time = %s AND class = %s AND division = %s"
+            max_colspan_para = (day,t,course_class,course_batch)
             cursor.execute(max_colspan_query,max_colspan_para)
             max_res = cursor.fetchall()
             if(len(max_res) > 0):
                 high_than_div = max_res[0][0]
-                if(high_than_div > no_of_div):
+                if(high_than_div > max_colspan_day[day]):
                     max_colspan_day[day] = high_than_div
 
+    print(max_colspan_day)
     total_colspan = 0
     for day in days:
         total_colspan = total_colspan + max_colspan_day[day]
@@ -295,7 +300,7 @@ def select_room(sel_room,CURR_BRANCH,CURR_YEAR_SEM):
             if(time_slots[t] in check_back_row.keys()):
                 if(day in check_back_row[time_slots[t]]):
                     continue
-            time_query = f"SELECT id,class,subject,faculty,division,batch FROM {CURR_YEAR_SEM} WHERE room = %s AND branch = %s AND day = %s AND time = %s"
+            time_query = f"SELECT class,subject,faculty,division,batch FROM {CURR_YEAR_SEM} WHERE room = %s AND branch = %s AND day = %s AND time = %s"
             curr_time_para = ( sel_room, CURR_BRANCH, day, time_slots[t])
             cursor.execute(time_query, curr_time_para)
             curr_time_res = cursor.fetchall()
@@ -322,17 +327,17 @@ def select_room(sel_room,CURR_BRANCH,CURR_YEAR_SEM):
             curr_batch = curr_time_res[0]
             if(rowspan_or_not):
                 if(curr_batch[-1] == "NO"):
-                    td = f'<td value="{ sel_room }" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-2] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    td = f'<td value="{ sel_room }" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[-2] } {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
                     table_body = table_body + td
                 else:
-                    td = f'<td value="{ sel_room }" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-1] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    td = f'<td value="{ sel_room }" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[-1] } {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
                     table_body = table_body + td
             else:
                 if(curr_batch[-1] == "NO"):
-                    td = f'<td value="{ sel_room }" rowspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-2] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    td = f'<td value="{ sel_room }" rowspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[-2] } {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
                     table_body = table_body + td
                 else:
-                    td = f'<td value="{ sel_room }" rowspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-1] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    td = f'<td value="{ sel_room }" rowspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[-1] } {" "} { curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
                     table_body = table_body + td
             next_time_res = False
         table_body = table_body + "</tr>"
@@ -824,6 +829,7 @@ def rem_slot():
         conn.commit()
         return redirect("/assign_slots")
     except:
+        conn.rollback()
         error = "Slot is already deleted or Some other error occured!"
         return redirect(url_for("assign_slots", error = error))
 
@@ -843,11 +849,12 @@ def assign_slots():
         type_submit = request.form.get("submit-button")
 
 
-        cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
+        cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s AND subclass = %s", (subject,college_class))
         subelective = cursor.fetchall()[0][0]
         if(subelective == "YES"):
             if(batch != "NO"):
                 errorin = "Elective subjects can only be added for whole divisions and not for batches"
+                conn.rollback()
                 return redirect(url_for("assign_slots", error = errorin))
             type_sub = "E".strip() + type_submit.strip()
         else:
@@ -855,8 +862,8 @@ def assign_slots():
 
         # Check for whether there is already a slot or not!
         for slot in slots:
-            check_query_slot = f"SELECT batch,type FROM { CURR_YEAR_SEM } WHERE slot = %s"
-            cursor.execute(check_query_slot,(slot,))
+            check_query_slot = f"SELECT batch,type FROM { CURR_YEAR_SEM } WHERE slot = %s AND class = %s AND division = %s"
+            cursor.execute(check_query_slot,(slot,college_class,division))
             check_data_slot = cursor.fetchall()
             if(len(check_data_slot) == 0):
                 continue
@@ -865,16 +872,19 @@ def assign_slots():
                     continue
                 elif((("E" in check_data_slot[0][1])and( "E" not in type_sub)) or ("E" not in check_data_slot[0][1])and( "E" in type_sub)):
                     errorin = "You cannot add electives or non electives when there is non elective! or elective for the slot already assigned!"
+                    conn.rollback()
                     return redirect(url_for("assign_slots", error = errorin))
                 elif(check_data_slot[0][0] == "NO" and batch != "NO"):
                     errorin = "You cannot add batch when there is whole division already allotted for the slot!"
+                    conn.rollback()
                     return redirect(url_for("assign_slots", error = errorin))
                 elif(check_data_slot[0][0] != "NO" and batch == "NO"):
                     errorin = "You cannot add Whole division when there a batch already allotted for the slot!"
+                    conn.rollback()
                     return redirect(url_for("assign_slots", error = errorin))
                 
 
-        check_res = checkSubject(CURR_YEAR_SEM,CURR_BRANCH,subject,batch,type_sub,division)
+        check_res = checkSubject(CURR_YEAR_SEM,CURR_BRANCH,subject,batch,type_sub,division,college_class)
 
         if(check_res):
             return redirect(url_for("assign_slots", error = check_res))
@@ -909,6 +919,7 @@ def assign_slots():
                 try:
                     cursor.execute(update_query,insert_para)
                 except mysql.Error as error:
+                    conn.rollback()
                     return redirect(url_for("assign_slots", error = error))
             conn.commit()
             error = "Successfully Inserted Slot!"
@@ -921,6 +932,7 @@ def assign_slots():
                 cursor.execute( check_query, check_para)
                 check_res = cursor.fetchall()
                 if(len(check_res) > 0):
+                    conn.rollback()
                     errorin = "Batch or Division has already been assigned slots"
                     return redirect(url_for("assign_slots", error = errorin))
         else:
@@ -928,6 +940,7 @@ def assign_slots():
             cursor.execute( check_query, check_para)
             check_res = cursor.fetchall()
             if(len(check_res) > 0):
+                conn.rollback()
                 errorin = "Batch or Division has already been assigned slots"
                 return redirect(url_for("assign_slots", error = errorin))
         if(len(mult_faculty) > 0):
@@ -947,6 +960,7 @@ def assign_slots():
                         cursor.execute(fac_query,fac_para)
                         fac_res = cursor.fetchall()
                         if(len(fac_res >= 1)):
+                            conn.rollback()
                             errorin = "Faculty is already alloted for that slot!"
                             return redirect(url_for("assign_slots", error = errorin))
                 for slot in slots:
@@ -959,7 +973,10 @@ def assign_slots():
                         cursor.execute(insert_query,insert_para)
                         conn.commit()
                     except mysql.Error as error:
+                        conn.rollback()
                         return redirect(url_for("assign_slots", error = error))
+                error = "Successfully Inserted Slot!"
+                return redirect(url_for("assign_slots", error = error))
             else:
                 for curr_fac in fac_list:
                     fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND (faculty  LIKE  %s)"
@@ -967,6 +984,7 @@ def assign_slots():
                     cursor.execute(fac_query,fac_para)
                     fac_res = cursor.fetchall()
                     if(len(fac_res) >= 1):
+                        conn.rollback()
                         errorin = "Faculty is already alloted for that slot!"
                         return redirect(url_for("assign_slots", error = errorin))
                 search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
@@ -977,9 +995,11 @@ def assign_slots():
                 try:
                     cursor.execute(insert_query,insert_para)
                     conn.commit()
+                    error = "Successfully Inserted Slot!"
+                    return redirect(url_for("assign_slots", error = error))
                 except mysql.Error as error:
                     return redirect(url_for("assign_slots", error = error))
-        else:
+        elif(len(mult_faculty) == 0):
             if(len(slots) > 1):
                 for slot in slots:
                     fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND  faculty = %s"
@@ -987,6 +1007,7 @@ def assign_slots():
                     cursor.execute(fac_query,fac_para)
                     fac_res = cursor.fetchall()
                     if(len(fac_res) >= 1):
+                        conn.rollback()
                         errorin = "Faculty is already alloted for that slot!"
                         return redirect(url_for("assign_slots", error = errorin))
                     search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
@@ -998,13 +1019,17 @@ def assign_slots():
                         cursor.execute(insert_query,insert_para)
                         conn.commit()
                     except mysql.Error as error:
+                        conn.rollback()
                         return redirect(url_for("assign_slots", error = error))
+                error = "Successfully Inserted Slot!"
+                return redirect(url_for("assign_slots", error = error))
             else:
                 fac_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE slot = %s AND  faculty = %s"
                 fac_para = (slots[0],faculty)
                 cursor.execute(fac_query,fac_para)
                 fac_res = cursor.fetchall()
                 if(len(fac_res) >= 1):
+                    conn.rollback()
                     errorin = "Faculty is already alloted for that slot!"
                     return redirect(url_for("assign_slots", error = errorin))
                 search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
@@ -1015,10 +1040,11 @@ def assign_slots():
                 try:
                     cursor.execute(insert_query,insert_para)
                     conn.commit()
-                    return redirect("/assign_slots")
-                except mysql.Error as error:
+                    error = "Successfully Inserted Slot!"
                     return redirect(url_for("assign_slots", error = error))
-            return redirect("/assign_slots")
+                except mysql.Error as error:
+                    conn.rollback()
+                    return redirect(url_for("assign_slots", error = error))                
         if(len(slots) > 1):
             for slot in slots:
                 room_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE room = %s AND slot = %s"
@@ -1034,9 +1060,11 @@ def assign_slots():
                     cursor.execute(query)
                     results = cursor.fetchall()
                     if(len(room_res) >= 1):
+                        conn.rollback()
                         errorin = "Room is already alloted for that slot!"
                         return redirect(url_for("assign_slots", error = errorin))
                     elif(len(batch_res) >= 1):
+                        conn.rollback()
                         errorin = "Batch of that Division is already alloted for that slot!"
                         return redirect(url_for("assign_slots", error = errorin))
                 search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
@@ -1047,8 +1075,10 @@ def assign_slots():
                 try:
                     cursor.execute(insert_query,insert_para)
                     conn.commit()
-                    return redirect("/assign_slots")
+                    error = "Successfully Inserted Slot!"
+                    return redirect(url_for("assign_slots", error = error))
                 except mysql.Error as error:
+                    conn.rollback()
                     return redirect(url_for("assign_slots", error = error))
         else:
             room_query = f"SELECT * FROM {CURR_YEAR_SEM} WHERE room = %s AND slot = %s"
@@ -1064,9 +1094,11 @@ def assign_slots():
                 cursor.execute(query)
                 results = cursor.fetchall()
                 if(len(room_res) >= 1):
+                    conn.rollback()
                     errorin = "Room is already alloted for that slot!"
                     return redirect(url_for("assign_slots", error = errorin))
                 elif(len(batch_res) >= 1):
+                    conn.rollback()
                     errorin = "Batch of that Division is already alloted for that slot!"
                     return redirect(url_for("assign_slots", error = errorin))
             search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
@@ -1077,8 +1109,10 @@ def assign_slots():
             try:
                 cursor.execute(insert_query,insert_para)
                 conn.commit()
-                return redirect("/assign_slots")
+                error = "Successfully Inserted Slot!"
+                return redirect(url_for("assign_slots", error = error))
             except mysql.Error as error:
+                conn.rollback()
                 return redirect(url_for("assign_slots", error = error))
     else:
         error = request.args.get("error")
@@ -1160,12 +1194,14 @@ def show_timetable():
             lec_load_query = f"SELECT COUNT(type) FROM {CURR_YEAR_SEM} WHERE faculty = %s AND type LIKE '%L%'"
             prac_load_query = f"SELECT COUNT(type) FROM {CURR_YEAR_SEM} WHERE faculty = %s AND type LIKE '%P%'"
             tut_load_query = f"SELECT COUNT(type) FROM {CURR_YEAR_SEM} WHERE faculty = %s AND type LIKE '%T%'"
-            cursor.execute(prac_load_query,(sel_fac,))
-            lec_load = cursor.fetchall()[0][0]
             cursor.execute(lec_load_query,(sel_fac,))
+            cursor.execute(lec_load_query,(sel_fac,))
+            lec_load = cursor.fetchall()[0][0]
+            cursor.execute(prac_load_query,(sel_fac,))
             prac_load = cursor.fetchall()[0][0]
             cursor.execute(tut_load_query,(sel_fac,))
             tut_load = cursor.fetchall()[0][0]
+            print(lec_load,prac_load,tut_load)
             total_load = lec_load + tut_load + prac_load
             fac_load = f"Theory: {lec_load} Tutorial: {tut_load} Practical: {prac_load} Total Load: {total_load}"
             return render_template("show_timetable.html", CURR_YEAR_SEM = CURR_YEAR_SEM, class_res = class_res, room_res = room_res, fac_res = fac_res,infoImpo = show_faculty,fac_load = fac_load,timetable = complete_table)
@@ -1540,8 +1576,8 @@ def view_edit():
     else:      
         sel_class = request.args.get("sel_class")
         infoImpo = f"Class: {sel_class}"
-        division_sep = sel_class.strip(" ")[-1]
-        comm_class = str("".join(sel_class.strip(" ")[0:-2]))
+        division_sep = sel_class.split(" ")[-1]
+        comm_class = " ".join(sel_class.split(" ")[0:-1])
         if(CURR_YEAR_SEM[0] == "O"):
             subsem = "ODD"
         else:
@@ -1550,7 +1586,11 @@ def view_edit():
         view_para = (division_sep,CURR_BRANCH)
         cursor.execute(view_query,view_para)
         view_res = cursor.fetchall()[0]
-        all_batch = [(division_sep + str(x+1)) for x in range(view_res[0])]
+        if(len(division_sep) >= 2):
+            add_symbol = "-"
+        else:
+            add_symbol = ""
+        all_batch = [(division_sep+ add_symbol +str(x+1)) for x in range(view_res[0])]
         cursor.execute("SELECT roomno FROM rooms")
         room_res = cursor.fetchall()
         cursor.execute("SELECT facinit FROM faculty")
@@ -1577,9 +1617,8 @@ def view_edit_check_api():
         slot_slot = slot_info["slot"]
         slot_type = slot_info["type"]
 
-        cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (slot_sub,))
+        cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s AND subclass = %s", (slot_sub,slot_class))
         subelective = cursor.fetchall()[0][0]
-        print("Subelective is ",subelective)
         if(subelective == "YES"):
             if(slot_batch != "NO"):
                 error = "Elective subjects can only be added for whole divisions and not for batches"
@@ -1589,8 +1628,8 @@ def view_edit_check_api():
         else:
             type_sub = slot_type
 
-        check_query_slot = f"SELECT batch,type FROM { CURR_YEAR_SEM } WHERE slot = %s"
-        cursor.execute(check_query_slot,(slot_slot,))
+        check_query_slot = f"SELECT batch,type FROM { CURR_YEAR_SEM } WHERE slot = %s AND class = %s AND division = %s"
+        cursor.execute(check_query_slot,(slot_slot,slot_class,slot_div))
         check_data_slot = cursor.fetchall()
         if(len(check_data_slot) == 0):
             pass
@@ -1611,7 +1650,7 @@ def view_edit_check_api():
                 errorin = "You cannot add Whole division when there a batch already allotted for the slot!"
                 return(jsonify({"error": errorin}),400)
         
-        check_res = checkSubject(CURR_YEAR_SEM,CURR_BRANCH,slot_sub,slot_batch,type_sub,slot_div)
+        check_res = checkSubject(CURR_YEAR_SEM,CURR_BRANCH,slot_sub,slot_batch,type_sub,slot_div,slot_class)
 
         if(check_res):
             return(jsonify({"error": check_res}),400)

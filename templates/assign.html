@@ -195,11 +195,16 @@
                 
                 division.addEventListener("change", (event) => {
                     const sel_batch = event.target.value;
+                    if(sel_batch.length >= 2){
+                        var add_symbol = "-";
+                    } else {
+                        var add_symbol = "";
+                    }
                     batch.innerHTML = "<option selected disabled>Select</option><option value='NO'>NO</option>";
                     div_res.forEach((div) => {
                         if (sel_batch === div[0]) {
                             for (let k = 0; k < div[1]; k++) {
-                                const cur_batch = div[0] + String(k + 1);
+                                const cur_batch = div[0] + add_symbol +String(k + 1);
                                 const newOption = document.createElement("option");
                                 newOption.text = cur_batch;
                                 newOption.value = cur_batch;
