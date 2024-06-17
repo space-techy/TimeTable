@@ -159,11 +159,26 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
     time_slots = ["7:00-8:00","8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00","12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"]
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     # Now we are working on the part of adding colspan for days
-    
+    max_colspan_day = {"Monday": no_of_div,"Tuesday": no_of_div, "Wednesday" : no_of_div,"Thursday": no_of_div,"Friday": no_of_div}
+    for t in time_slots:
+        for day in days:
+            max_colspan_query = f"SELECT COUNT(*) FROM {CURR_YEAR_SEM} WHERE day = %s AND time = %s"
+            max_colspan_para = (day,t)
+            cursor.execute(max_colspan_query,max_colspan_para)
+            max_res = cursor.fetchall()
+            if(len(max_res) > 0):
+                high_than_div = max_res[0][0]
+                if(high_than_div > no_of_div):
+                    max_colspan_day[day] = high_than_div
+
+    total_colspan = 0
+    for day in days:
+        total_colspan = total_colspan + max_colspan_day[day]
+
     # This code is for creating html table head with colspan
     table_head = "<thead><tr><th style='width: 8%;'>Time/Day</th>"
     for day in days:
-        table_head = table_head + f"<th colspan={no_of_div}>{day}</th>"
+        table_head = table_head + f"<th colspan={max_colspan_day[day]}>{day}</th>"
     table_head  = table_head + "</tr></thead>"
     # Now we are going to create the body of the table
     check_back_row = {}
@@ -171,7 +186,7 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
     for t in range(len(time_slots)):
         table_body = table_body + f"<tr><td class='timeslot'>{time_slots[t]}</td>"
         if(time_slots[t] == "1:00-2:00"):
-            table_body = table_body + f'<td colspan={(no_of_div*5)} style="text-align: center;" class="lunch">LUNCH BREAK</td>'
+            table_body = table_body + f'<td colspan={total_colspan} style="text-align: center;" class="lunch">LUNCH BREAK</td>'
             continue
         for day in days:
             if(time_slots[t] in check_back_row.keys()):
@@ -198,34 +213,62 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
                     else:
                         check_back_row[time_slots[t + 1]] = [day]
                         rowspan_or_not = True
-            data_query = f"SELECT id,subject,room,faculty,division,batch FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
+            data_query = f"SELECT id,subject,room,faculty,division,batch,type FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
             cursor.execute(data_query, curr_time_para)
             data_res = cursor.fetchall()
 
+
             if(len(data_res) == 0):
-                table_body = table_body + f"<td colspan = {no_of_div} class='{daysInDict[day]+str(t+1)}'></td>"
+                table_body = table_body + f"<td colspan = {max_colspan_day[day]} class='{daysInDict[day]+str(t+1)}'></td>"
                 continue
-            if((len(data_res) > 1) or data_res[0][-1] != "NO"):
-                for curr_batch in sorted(data_res, key=(lambda x: x[5])):
-                    if(rowspan_or_not):
-                        td = f'<td rowspan=2 colspan=1 value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}">{ curr_batch[5] } <br /> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>'
-                        table_body = table_body + td
-                    else:
-                        td = f'<td rowspan=1 colspan=1 value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}">{ curr_batch[5] } <br /> {" "}  { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }</td>'
-                        table_body = table_body + td
-                for an in range((no_of_div - len(data_res))):
-                    if(rowspan_or_not):
-                        table_body = table_body + f"<td  rowspan=2 colspan=1 class='{daysInDict[day]+str(t+1)}'></td>"
-                    else:
-                        table_body = table_body + f"<td  rowspan=1 colspan=1 class='{daysInDict[day]+str(t+1)}'></td>"
-            else:
+            if(len(data_res) == 1 and ("E" not in data_res[0][-1]) and (data_res[0][-2] == "NO")):
                 curr_batch = data_res[0]
                 if(rowspan_or_not):
-                    td = f'<td rowspan=2 colspan={ no_of_div } value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}">  {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }  </td>'
+                    td = f'<td rowspan=2 colspan={ max_colspan_day[day] } value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}">  {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }  </td>'
                     table_body = table_body + td
                 else:
-                    td = f'<td rowspan=1 colspan={ no_of_div } value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>'
+                    td = f'<td rowspan=1 colspan={ max_colspan_day[day] } value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>'
                     table_body = table_body + td
+            if(len(data_res) > 0 and ("E" in data_res[0][-1]) and (data_res[0][-2] == "NO")):
+
+                what_colspan = max_colspan_day[day]//len(data_res)
+                add_into_colspan = max_colspan_day[day]%len(data_res)
+                colspan_dict = {}
+                for i in range(len(data_res)):
+                    colspan_dict[i] = what_colspan
+                for i in range(add_into_colspan):
+                    colspan_dict[i] = colspan_dict[i] + 1
+
+                for curr_batch in data_res:
+                    if(rowspan_or_not):
+                        colspan_val = colspan_dict[data_res.index(curr_batch)]
+                        td = f"""<td rowspan=2 colspan={colspan_val} value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>"""
+                        table_body = table_body + td
+                    else:
+                        colspan_val = colspan_dict[data_res.index(curr_batch)]
+                        td = f"""<td rowspan=1 colspan={colspan_val} value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>"""
+                        table_body = table_body + td
+
+
+            if(len(data_res) > 0 and ("E" not in data_res[0][-1]) and (data_res[0][-2] != "NO")):
+
+                what_colspan = max_colspan_day[day]//len(data_res)
+                add_into_colspan = max_colspan_day[day]%len(data_res)
+                colspan_dict = {}
+                for i in range(len(data_res)):
+                    colspan_dict[i] = what_colspan
+                for i in range(add_into_colspan):
+                    colspan_dict[i] = colspan_dict[i] + 1
+
+                for curr_batch in sorted(data_res, key=(lambda x: x[5])):
+                    if(rowspan_or_not):
+                        colspan_val = colspan_dict[data_res.index(curr_batch)]
+                        td = f"""<td rowspan=2 colspan={colspan_val}  value="{curr_batch[0]}"  class="{daysInDict[day]+str(t+1)}">  { curr_batch[5] } <br /> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }  </td>"""
+                        table_body = table_body + td
+                    else:
+                        colspan_val = colspan_dict[data_res.index(curr_batch)]
+                        td = f"""<td rowspan=1 colspan={colspan_val}  value="{curr_batch[0]}"  class="{daysInDict[day]+str(t+1)}">  { curr_batch[5] } <br /> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }  </td>"""
+                        table_body = table_body + td
             next_time_res = False
         table_body = table_body + "</tr>"
     table_body = table_body + "</tbody>"
@@ -799,6 +842,7 @@ def assign_slots():
         slots = request.form.getlist("slots")
         type_submit = request.form.get("submit-button")
 
+
         cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (subject,))
         subelective = cursor.fetchall()[0][0]
         if(subelective == "YES"):
@@ -809,12 +853,34 @@ def assign_slots():
         else:
             type_sub = type_submit
 
+        # Check for whether there is already a slot or not!
+        for slot in slots:
+            check_query_slot = f"SELECT batch,type FROM { CURR_YEAR_SEM } WHERE slot = %s"
+            cursor.execute(check_query_slot,(slot,))
+            check_data_slot = cursor.fetchall()
+            if(len(check_data_slot) == 0):
+                continue
+            else:
+                if(("E" in check_data_slot[0][1]) and ( "E" in type_sub)):
+                    continue
+                elif((("E" in check_data_slot[0][1])and( "E" not in type_sub)) or ("E" not in check_data_slot[0][1])and( "E" in type_sub)):
+                    errorin = "You cannot add electives or non electives when there is non elective! or elective for the slot already assigned!"
+                    return redirect(url_for("assign_slots", error = errorin))
+                elif(check_data_slot[0][0] == "NO" and batch != "NO"):
+                    errorin = "You cannot add batch when there is whole division already allotted for the slot!"
+                    return redirect(url_for("assign_slots", error = errorin))
+                elif(check_data_slot[0][0] != "NO" and batch == "NO"):
+                    errorin = "You cannot add Whole division when there a batch already allotted for the slot!"
+                    return redirect(url_for("assign_slots", error = errorin))
+                
+
         check_res = checkSubject(CURR_YEAR_SEM,CURR_BRANCH,subject,batch,type_sub,division)
 
         if(check_res):
-            redirect(url_for("assign_slots", error = check_res))
+            return redirect(url_for("assign_slots", error = check_res))
 
         if("E" in type_sub):
+            fac_mult = ""
             if(len(mult_faculty) > 0):
                 faculty = faculty.strip() + "/" + mult_faculty.strip()
                 fac_list = []
@@ -826,17 +892,19 @@ def assign_slots():
                 fac_list.append(faculty[fac_index:])
                 fac_mult = faculty
                 faculty = fac_list
-            for curr_fac in fac_list:
+            for curr_fac in faculty:
                 for slot in slots:
                     can_add_or_not = addElective(CURR_YEAR_SEM,slot,room,faculty)
                     if(can_add_or_not):
                         conn.rollback()
                         return redirect(url_for("assign_slots", error = can_add_or_not))
+            if(len(fac_mult) != 0):
+                faculty = fac_mult
             for slot in slots:
                 search_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
                 cursor.execute(search_query, (slot,))
                 time_slots = cursor.fetchall()[0]
-                insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],fac_mult,room, batch, type_sub, CURR_BRANCH,division)
+                insert_para = (college_class,subject,slot,time_slots[0],time_slots[1],faculty,room, batch, type_sub, CURR_BRANCH,division)
                 update_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
                 try:
                     cursor.execute(update_query,insert_para)
@@ -1511,19 +1579,61 @@ def view_edit_check_api():
 
         cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s", (slot_sub,))
         subelective = cursor.fetchall()[0][0]
+        print("Subelective is ",subelective)
         if(subelective == "YES"):
             if(slot_batch != "NO"):
                 error = "Elective subjects can only be added for whole divisions and not for batches"
                 return(jsonify({"error": error}),400)
             type_sub = "E".strip() + slot_type.strip()
+            print(type_sub)
         else:
             type_sub = slot_type
 
+        check_query_slot = f"SELECT batch,type FROM { CURR_YEAR_SEM } WHERE slot = %s"
+        cursor.execute(check_query_slot,(slot_slot,))
+        check_data_slot = cursor.fetchall()
+        if(len(check_data_slot) == 0):
+            pass
+        else:
+            if(("E" in check_data_slot[0][1]) and ( "E" in type_sub)):
+                print(check_data_slot)
+                print(type_sub)
+                pass
+            elif((("E" in check_data_slot[0][1])and( "E" not in type_sub)) or ("E" not in check_data_slot[0][1])and( "E" in type_sub)):
+                print(check_data_slot)
+                print(type_sub)
+                errorin = "You cannot add electives or non electives when there is non elective! or elective for the slot already assigned!"
+                return(jsonify({"error": errorin}),400)
+            elif(check_data_slot[0][0] == "NO" and slot_batch != "NO"):
+                errorin = "You cannot add batch when there is whole division already allotted for the slot!"
+                return(jsonify({"error": errorin}),400)
+            elif(check_data_slot[0][0] != "NO" and slot_batch == "NO"):
+                errorin = "You cannot add Whole division when there a batch already allotted for the slot!"
+                return(jsonify({"error": errorin}),400)
         
         check_res = checkSubject(CURR_YEAR_SEM,CURR_BRANCH,slot_sub,slot_batch,type_sub,slot_div)
 
         if(check_res):
             return(jsonify({"error": check_res}),400)
+        
+        if("E" in type_sub):
+            canadd_or_not = addElective(CURR_YEAR_SEM,slot_slot,slot_room,slot_fac)
+            if(canadd_or_not):
+                return(jsonify({"error": canadd_or_not}),400)
+            else:
+                time_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+                cursor.execute(time_query,(slot_slot,))
+                time_res = cursor.fetchall()[0]
+                update_query = f"INSERT INTO { CURR_YEAR_SEM }(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                update_para = (slot_class,slot_sub,slot_slot,time_res[0],time_res[1],slot_fac,slot_room,slot_batch,type_sub,CURR_BRANCH,slot_div)
+                try:
+                    cursor.execute(update_query,update_para)
+                    conn.commit()
+                    error = f"Successfully Inserted the value inTable { CURR_YEAR_SEM }"
+                    return(jsonify({"error": error}),200)
+                except mysql.Error as error:
+                    conn.rollback()
+                    return(jsonify({"error": str(error)}),400)
 
         # To check for all the clashes
         # All parameters first
@@ -1549,7 +1659,7 @@ def view_edit_check_api():
             cursor.execute(time_query,(slot_slot,))
             time_res = cursor.fetchall()[0]
             update_query = f"INSERT INTO { CURR_YEAR_SEM }(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-            update_para = (slot_class,slot_sub,slot_slot,time_res[0],time_res[1],slot_fac,slot_room,slot_batch,slot_type,CURR_BRANCH,slot_div)
+            update_para = (slot_class,slot_sub,slot_slot,time_res[0],time_res[1],slot_fac,slot_room,slot_batch,type_sub,CURR_BRANCH,slot_div)
             try:
                 cursor.execute(update_query,update_para)
                 conn.commit()
@@ -1601,7 +1711,7 @@ def view_swap_api():
 
         # Select slots to be swapped
         slot_query = f"""
-            SELECT class, slot, faculty, room, batch, division, subject, id 
+            SELECT class, slot, faculty, room, batch, division, subject, id, type
             FROM {CURR_YEAR_SEM} 
             WHERE id = %s OR id = %s
         """
@@ -1610,9 +1720,16 @@ def view_swap_api():
 
         slot_batch_check = []
         canInsert = []
+        slot_type_check = []
 
         for slot in slots_res:
-            slot_class, slot_slot, slot_fac, slot_room, slot_batch, slot_div, slot_sub, slot_id = slot
+            slot_class, slot_slot, slot_fac, slot_room, slot_batch, slot_div, slot_sub, slot_id,slot_type = slot
+            slot_type_check.append(slot_type)
+            if(len(slot_type_check) >= 2):
+                if(slot_type_check[0] != slot_type_check[1]):
+                    conn.rollback()
+                    return jsonify({"error": "Swap cannot be done for subjects which are of different type like swap cannot be done for elective lecture with non elective lecture or tutorial with lecture!"}), 400
+
             slot_batch_check.append(slot_batch)
 
             # Check for batch swap validity
@@ -1673,4 +1790,5 @@ def view_swap_api():
                 conn.rollback()
                 return jsonify({"error": str(errors)}), 400
         else:
+            conn.rollback()
             return jsonify({"error": error}), 400

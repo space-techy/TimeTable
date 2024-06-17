@@ -19,12 +19,12 @@
                     <form action="/create_timetable" method="POST">
                         <div class="form-group d-flex align-items-center">
                             <label for="year_session" class="form-label">Year/Session :</label>
-                            <input type="text" id="year_session" name="year_session" class="form-control" placeholder="Year or Session" {{ isDisabled }}>
+                            <input type="text" id="year_session" name="year_session" class="form-control" placeholder="Year or Session" {{ isDisabled }} required>
                         </div>
                         <p style="margin-top: -8%;margin-right: -31%;">Write Year e.g 2022_2023</p>
                         <div class="form-group d-flex align-items-center mt-2">
                             <label for="sem" class="form-label">Select Semester :</label>
-                            <select id="sem" name="sem" class="form-select" aria-label="Default select example" {{ isDisabled }}>
+                            <select id="sem" name="sem" class="form-select" aria-label="Default select example" {{ isDisabled }} required>
                                 <option selected {{ isDisabled }}>Semester</option>
                                 <option value="ODD">ODD</option>
                                 <option value="EVEN">EVEN</option>
@@ -60,7 +60,7 @@
                                         <div class="icons">
                                             <form action="/all_show_timetable" method="POST">
                                                 <input type="hidden" name="year_sem_id" value="{{ sem_t[0] }}">
-                                                <input type="image" src="{{url_for('static', filename='/images/search.png')}}" class="icons-class" alt="search icon" name="action" value="search"/>
+                                                <input type="image" src="{{url_for('static', filename='/images/search.png')}}" class="icons-class" alt="search icon" name="action" value="search" />
                                             </form>
                                             |
                                             <form action="/all_edit_timetable" method="POST">
