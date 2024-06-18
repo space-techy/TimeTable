@@ -8,30 +8,30 @@
             <div class="container-fluid">
                 <input type="hidden" name="class" value="{{div_class}}">
                 <input type="hidden" name="division" value='{{sel_class.split(" ")[-1]}}'>
-                <label for="subject">Subject :</label>
-                <select style="margin-left: 5px; margin-right: 5px;" id="subject" name="subject" onclick="add" onchange="addToData(this)">
+                <strong><label for="subject">Subject :</label></strong>
+                <select style="margin-left: 5px; margin-right: 5px;margin-top: 7px;" id="subject" name="subject" onclick="add" onchange="addToData(this)">
                     <option selected disabled>Select</option>
                     <!-- Add other subject options here -->
                     {% for sub in sub_res  %}
                         <option value="{{sub[0]}}">{{sub[0]}}</option>
                     {% endfor %}
                 </select>
-                <label for="room">Room :</label>
-                <select style="margin-left: 5px; margin-right: 5px;" id="room" name="room" onchange="addToData(this)">
+                <strong><label for="room">Room :</label></strong>
+                <select style="margin-left: 5px; margin-right: 5px;margin-top: 7px;" id="room" name="room" onchange="addToData(this)">
                     <option selected disabled>Select</option>
                     {% for room in room_res %}
                         <option value="{{room[0]}}">{{room[0]}}</option>
                     {% endfor %}
                 </select>
-                <label for="faculty">Faculty :</label>
-                <select style="margin-left: 5px; margin-right: 5px;" id="faculty" name="faculty" onchange="addToData(this)">
+                <strong><label for="faculty">Faculty :</label></strong>
+                <select style="margin-left: 5px; margin-right: 5px;margin-top: 7px;" id="faculty" name="faculty" onchange="addToData(this)">
                     <option selected disabled>Select</option>
                     {% for fac in fac_res %}
                         <option value="{{fac[0]}}">{{fac[0]}}</option>
                     {% endfor %}
                 </select>
-                <label for="batch">Batch :</label>
-                <select style="margin-left: 5px; margin-right: 5px;" id="batch" name="batch" onchange="addToData(this)">
+                <strong><label for="batch">Batch :</label></strong>
+                <select style="margin-left: 5px; margin-right: 5px;margin-top: 7px;" id="batch" name="batch" onchange="addToData(this)">
                     <option selected disabled>Select</option>
                     <option value="NO">NO</option>
                     {% for batch in all_batch %}
@@ -39,8 +39,8 @@
                     {% endfor %}
                     <!-- Add other batch options here -->
                 </select>
-                <label for="batch">Type :</label>
-                <select style="margin-left: 5px; margin-right: 5px;" id="batch" name="type" onchange="addToData(this)">
+                <strong><label for="batch">Type :</label></strong>
+                <select style="margin-left: 5px; margin-right: 5px;margin-top: 7px;" id="batch" name="type" onchange="addToData(this)">
                     <option selected disabled>Select</option>
                     <option value="L">L</option>
                     <option value="P">P</option>
@@ -70,10 +70,27 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         const tdData = document.querySelectorAll("td");
+        let lastClicked = null;
+
         tdData.forEach((tdDataInfo, i) => {
+            // Set initial border for all td elements
+            tdDataInfo.style.border = "1px solid black";
+
             tdDataInfo.addEventListener("click", (element) => {
-                insertData["slot"] = tdData[i].classList[0];
-                insertData["slot_id"] = tdData[i].getAttribute("value");
+                // Reset border of previously clicked td
+                if (lastClicked) {
+                    lastClicked.style.border = "1px solid black";
+                }
+
+                // Set border of currently clicked td
+                tdDataInfo.style.border = "3px solid black";
+
+                // Update insertData object
+                insertData["slot"] = tdDataInfo.classList[0];
+                insertData["slot_id"] = tdDataInfo.getAttribute("value");
+
+                // Update lastClicked
+                lastClicked = tdDataInfo;
             });
         });
     });
@@ -132,6 +149,7 @@
             location.reload();
         })
     }
+    
 
     
 

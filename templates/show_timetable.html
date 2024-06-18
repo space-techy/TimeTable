@@ -6,10 +6,10 @@
     {% if(timetable) %}
         <div class="timetable-container" id="time-table" style="margin-top: 2%;">
             <header>
+                <h1>Somaiya Vidyavihar University</h1>
                 <h1>K. J. Somaiya College of Engineering</h1>
-                <p>(A Constituent College of Somaiya Vidyavihar University)</p>
-                <h5>Department of {{ g.CURR_DEPT }}</h5>
-                <h5>Time Table</h5>
+                <h3>Department of {{ g.CURR_DEPT }}</h3>
+                <h3>Time Table</h3>
             </header>
             <section class="class-info">
                 <p style="float: left;">{{ infoImpo }}</p>
@@ -30,8 +30,8 @@
             <table class="timetable" id="time-table-shown">
                 {{ timetable | safe }}
             </table>
-            <p style="float: left;">H.O.D</p>
-            <p style="float: right;">PRINCIPAL</p>
+            <p style="float: left;"><strong>H.O.D</strong></p>
+            <p style="float: right;"><strong>PRINCIPAL</strong></p>
         </div>
     {% endif %}
     
