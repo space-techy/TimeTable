@@ -321,12 +321,12 @@ def select_room(sel_room,CURR_BRANCH,CURR_YEAR_SEM):
             curr_time_para = ( day, time_slots[t],f"%{sel_room}%")
             cursor.execute(time_query, curr_time_para)
             curr_time_res = cursor.fetchall()
-            curr_time_res = sorted(curr_time_res)
+            curr_time_res = sorted(curr_time_res,key= lambda cur_time_res: cur_time_res[-1])
             if((t+1) != len(time_slots)):
                 next_time_para = ( day, time_slots[t+1],f"%{sel_room}%")
                 cursor.execute(time_query, next_time_para)
                 next_time_res = cursor.fetchall()
-                next_time_res = sorted(next_time_res)
+                next_time_res = sorted(next_time_res, key= lambda next_time_res: next_time_res[-1])
             rowspan_or_not = False
             if(next_time_res):
                 if(curr_time_res == next_time_res):
@@ -1577,12 +1577,8 @@ def view_edit_check_api():
             pass
         else:
             if(("E" in check_data_slot[0][1]) and ( "E" in type_sub)):
-                print(check_data_slot)
-                print(type_sub)
                 pass
             elif((("E" in check_data_slot[0][1])and( "E" not in type_sub)) or ("E" not in check_data_slot[0][1])and( "E" in type_sub)):
-                print(check_data_slot)
-                print(type_sub)
                 errorin = "You cannot add electives or non electives when there is non elective! or elective for the slot already assigned!"
                 return(jsonify({"error": errorin}),400)
             elif(check_data_slot[0][0] == "NO" and slot_batch != "NO"):
@@ -1626,9 +1622,10 @@ def view_edit_check_api():
         fac_check = check_data( CURR_YEAR_SEM, fac_para=fac_para)
         div_check = check_data( CURR_YEAR_SEM, div_para=div_para)
         room_check = check_data( CURR_YEAR_SEM, room_para=room_para)
+        all_check = check_data( CURR_YEAR_SEM, all_para= all_para, fac_para=fac_para, div_para=div_para,room_para=room_para)
         if(slot_sub in pass_room_subjecs):
             room_check = False
-        all_check = check_data( CURR_YEAR_SEM, all_para= all_para, fac_para=fac_para, div_para=div_para,room_para=room_para)
+            all_check = False
         if(fac_check):
             error = error +  "Faculty has already been allotted here "
         if(div_check):

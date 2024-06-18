@@ -4,7 +4,7 @@
 <div class="container text-center">
     <div class="grid-table">
         <div class="col-12 col-md-6 py-5 form-container create-div">
-            <p>{{ error }}</p>
+            <p id="show-error">{{ error }}</p>
             <div class="mk_time">
                 <h2>Assign Theory Slots</h2>
                 <h2>{{ CURR_YEAR_SEM.upper() }}</h2>
@@ -137,6 +137,8 @@
 </div>
 
 <script>
+
+
     function addIdtoUpdate(element){
         const editButton = document.getElementById("editButton");
         const idToAdd = element.value;
@@ -234,6 +236,11 @@
             });
         });
     });
+
+    const errorShow = document.getElementById("show-error");
+    if(errorShow.innerText.length > 1){
+        alert(errorShow.innerText);
+    }
 </script>
 
 {% endblock content %}
