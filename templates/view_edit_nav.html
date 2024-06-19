@@ -9,7 +9,7 @@
                 <input type="hidden" name="class" value="{{div_class}}">
                 <input type="hidden" name="division" value='{{sel_class.split(" ")[-1]}}'>
                 <strong><label for="subject">Subject :</label></strong>
-                <select style="margin-left: 5px; margin-right: 5px;margin-top: 7px;" id="subject" name="subject" onclick="add" onchange="addToData(this)">
+                <select style="margin-left: 5px; margin-right: 5px;margin-top: 7px;" id="subject" name="subject" onchange="addToData(this)">
                     <option selected disabled>Select</option>
                     <!-- Add other subject options here -->
                     {% for sub in sub_res  %}
@@ -66,6 +66,36 @@
     console.log(insertData);
     function addToData(element){
         insertData[element.name] = element.value;
+
+        if(element.name == "subject"){
+            const sub_val = element.value;
+            const sel_sub = {
+            "getSubject": sub_val,
+            };
+
+            fetch("/get_sub",{
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(sel_sub)
+            })
+            .then(response => response.json())
+            .then(data => {
+                const subBatchList = data.batchList;
+                const batchID = document.getElementById("batch");
+                var batchHTML = "<option selected disabled>Select</option>"+"<option value='NO'>NO</option>";
+
+
+                if(subBatchList != "None"){
+                subBatchList.forEach((batch)=>{
+                    var tempBatch = `<option value='${batch}'>${batch}</option>`
+                    batchHTML = batchHTML + tempBatch;
+                });
+                batchID.innerHTML = batchHTML;
+                }
+            })
+        }
     }
 
     document.addEventListener("DOMContentLoaded", () => {

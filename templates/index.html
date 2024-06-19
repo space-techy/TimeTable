@@ -95,6 +95,35 @@
         }
       }
 
+      if(element.name == "subject"){
+        const sub_val = element.value;
+        const sel_sub = {
+          "getSubject": sub_val,
+        };
+
+        fetch("/get_sub",{
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(sel_sub)
+        })
+        .then(response => response.json())
+        .then(data => {
+            const subBatchList = data.batchList;
+            const batchID = document.getElementById("batch");
+            var batchHTML = "<option selected disabled>Select</option>"+"<option value='NO'>NO</option>";
+
+
+            if(subBatchList != "None"){
+              subBatchList.forEach((batch)=>{
+                var tempBatch = `<option value='${batch}'>${batch}</option>`
+                batchHTML = batchHTML + tempBatch;
+              });
+              batchID.innerHTML = batchHTML;
+            }
+        })
+      }
     }
     
   </script>

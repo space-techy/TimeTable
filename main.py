@@ -5,7 +5,6 @@ from datetime import timedelta
 from user_helper import User
 # from check_queries import check_data
 # from api_timetable import select_class,select_room,select_faculty
-import openpyxl
 import ast
 import os
 
@@ -196,28 +195,29 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
             if(time_slots[t] in check_back_row.keys()):
                 if(day in check_back_row[time_slots[t]]):
                     continue
-            time_query = f"SELECT class,subject,day,faculty,room,type,branch,batch,division FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
-            curr_time_para = (day,time_slots[t],course_department, course_batch)
+            time_query = f"SELECT class,subject,day,faculty,room,type,branch,batch,division FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s AND class = %s"
+            curr_time_para = (day,time_slots[t],course_department, course_batch, course_class)
             cursor.execute(time_query, curr_time_para)
             curr_time_res = cursor.fetchall()
             curr_time_res = sorted(curr_time_res)
             if((t+1) != len(time_slots)):
-                next_time_para = (day,time_slots[t + 1],course_department, course_batch)
+                next_time_para = (day,time_slots[t + 1],course_department, course_batch, course_class)
                 cursor.execute(time_query, next_time_para )
                 next_time_res = cursor.fetchall()
                 next_time_res = sorted(next_time_res)
             rowspan_or_not = False
-            if(next_time_res):
-                if(curr_time_res == next_time_res):
-                    if(time_slots[t+1] in check_back_row.keys()):
-                        add_day =  check_back_row[time_slots[t + 1]]
-                        add_day.append(day)
-                        check_back_row[time_slots[t + 1]] = add_day
-                        rowspan_or_not = True
-                    else:
-                        check_back_row[time_slots[t + 1]] = [day]
-                        rowspan_or_not = True
-            data_query = f"SELECT id,subject,room,faculty,division,batch,type FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s"
+            if(len(curr_time_res) != 0):
+                if(next_time_res and ("L" not in curr_time_res[0][5])):
+                    if(curr_time_res == next_time_res):
+                        if(time_slots[t+1] in check_back_row.keys()):
+                            add_day =  check_back_row[time_slots[t + 1]]
+                            add_day.append(day)
+                            check_back_row[time_slots[t + 1]] = add_day
+                            rowspan_or_not = True
+                        else:
+                            check_back_row[time_slots[t + 1]] = [day]
+                            rowspan_or_not = True
+            data_query = f"SELECT id,subject,room,faculty,division,batch,type FROM { CURR_YEAR_SEM } WHERE day = %s AND time = %s AND branch = %s AND division = %s AND class = %s"
             cursor.execute(data_query, curr_time_para)
             data_res = cursor.fetchall()
 
@@ -225,6 +225,7 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
             if(len(data_res) == 0):
                 table_body = table_body + f"<td colspan = {max_colspan_day[day]} class='{daysInDict[day]+str(t+1)}'></td>"
                 continue
+
             if(len(data_res) == 1 and ("E" not in data_res[0][-1]) and (data_res[0][-2] == "NO")):
                 curr_batch = data_res[0]
                 if(rowspan_or_not):
@@ -233,7 +234,7 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
                 else:
                     td = f'<td rowspan=1 colspan={ max_colspan_day[day] } value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>'
                     table_body = table_body + td
-            if(len(data_res) > 0 and ("E" in data_res[0][-1]) and (data_res[0][-2] == "NO")):
+            if(len(data_res) > 0 and ("E" in data_res[0][-1]) and (data_res[0][-2] != "NO")):
 
                 what_colspan = max_colspan_day[day]//len(data_res)
                 add_into_colspan = max_colspan_day[day]%len(data_res)
@@ -253,6 +254,25 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
                         td = f"""<td rowspan=1 colspan={colspan_val} value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>"""
                         table_body = table_body + td
 
+            if(len(data_res) > 0 and ("E" in data_res[0][-1]) and (data_res[0][-2] == "NO")):
+
+                what_colspan = max_colspan_day[day]//len(data_res)
+                add_into_colspan = max_colspan_day[day]%len(data_res)
+                colspan_dict = {}
+                for i in range(len(data_res)):
+                    colspan_dict[i] = what_colspan
+                for i in range(add_into_colspan):
+                    colspan_dict[i] = colspan_dict[i] + 1
+
+                for curr_batch in data_res:
+                    if(rowspan_or_not):
+                        colspan_val = colspan_dict[data_res.index(curr_batch)]
+                        td = f"""<td rowspan=2 colspan={colspan_val} value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>"""
+                        table_body = table_body + td
+                    else:
+                        colspan_val = colspan_dict[data_res.index(curr_batch)]
+                        td = f"""<td rowspan=1 colspan={colspan_val} value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>"""
+                        table_body = table_body + td
 
             if(len(data_res) > 0 and ("E" not in data_res[0][-1]) and (data_res[0][-2] != "NO")):
 
@@ -317,7 +337,7 @@ def select_room(sel_room,CURR_BRANCH,CURR_YEAR_SEM):
             if(time_slots[t] in check_back_row.keys()):
                 if(day in check_back_row[time_slots[t]]):
                     continue
-            time_query = f"SELECT class,subject,faculty,division,batch FROM {CURR_YEAR_SEM} WHERE day = %s AND time = %s AND room LIKE %s"
+            time_query = f"SELECT class,subject,faculty,type,division,batch FROM {CURR_YEAR_SEM} WHERE day = %s AND time = %s AND room LIKE %s"
             curr_time_para = ( day, time_slots[t],f"%{sel_room}%")
             cursor.execute(time_query, curr_time_para)
             curr_time_res = cursor.fetchall()
@@ -328,16 +348,18 @@ def select_room(sel_room,CURR_BRANCH,CURR_YEAR_SEM):
                 next_time_res = cursor.fetchall()
                 next_time_res = sorted(next_time_res, key= lambda next_time_res: next_time_res[-1])
             rowspan_or_not = False
-            if(next_time_res):
-                if(curr_time_res == next_time_res):
-                    if(time_slots[t+1] in check_back_row.keys()):
-                        add_day =  check_back_row[time_slots[t + 1]]
-                        add_day.append(day)
-                        check_back_row[time_slots[t + 1]] = add_day
-                        rowspan_or_not = True
-                    else:
-                        check_back_row[time_slots[t + 1]] = [day]
-                        rowspan_or_not = True  
+            if(len(curr_time_res) != 0):
+                if(next_time_res and ("L" not in curr_time_res[0][-3])):
+                    if(curr_time_res == next_time_res):
+                        if(time_slots[t+1] in check_back_row.keys()):
+                            add_day =  check_back_row[time_slots[t + 1]]
+                            add_day.append(day)
+                            check_back_row[time_slots[t + 1]] = add_day
+                            rowspan_or_not = True
+                        else:
+                            check_back_row[time_slots[t + 1]] = [day]
+                            rowspan_or_not = True  
+
             if(len(curr_time_res) == 0):
                 table_body = table_body + f"<td colspan={max_colspan_day[day]} class='{daysInDict[day]+str(t+1)}'></td>"
                 continue
@@ -391,7 +413,7 @@ def select_faculty(sel_fac,CURR_BRANCH,CURR_YEAR_SEM):
             if(time_slots[t] in check_back_row.keys()):
                 if(day in check_back_row[time_slots[t]]):
                     continue
-            time_query = f"SELECT class,subject,room,division,batch FROM  { CURR_YEAR_SEM } WHERE faculty LIKE %s AND day = %s AND time = %s"
+            time_query = f"SELECT class,subject,room,type,division,batch FROM  { CURR_YEAR_SEM } WHERE faculty LIKE %s AND day = %s AND time = %s"
             curr_time_para = ( f"%{sel_fac}%", day, time_slots[t], )
             cursor.execute(time_query,curr_time_para)
             curr_time_res = cursor.fetchall()
@@ -402,19 +424,22 @@ def select_faculty(sel_fac,CURR_BRANCH,CURR_YEAR_SEM):
                 next_time_res = cursor.fetchall()
                 next_time_res = sorted(next_time_res)
             rowspan_or_not = False
-            if(next_time_res):
-                if(curr_time_res == next_time_res):
-                    if(time_slots[t+1] in check_back_row.keys()):
-                        add_day =  check_back_row[time_slots[t + 1]]
-                        add_day.append(day)
-                        check_back_row[time_slots[t + 1]] = add_day
-                        rowspan_or_not = True
-                    else:
-                        check_back_row[time_slots[t + 1]] = [day]
-                        rowspan_or_not = True
+            if(len(curr_time_res) != 0):
+                if(next_time_res and ("L" not in curr_time_res[0][-3])):
+                    if(curr_time_res == next_time_res):
+                        if(time_slots[t+1] in check_back_row.keys()):
+                            add_day =  check_back_row[time_slots[t + 1]]
+                            add_day.append(day)
+                            check_back_row[time_slots[t + 1]] = add_day
+                            rowspan_or_not = True
+                        else:
+                            check_back_row[time_slots[t + 1]] = [day]
+                            rowspan_or_not = True
             if(len(curr_time_res) == 0):
                 table_body = table_body + f"<td class='{daysInDict[day]+str(t+1)}''></td>"
                 continue
+            if("L" in curr_time_res[0][-3]):
+                rowspan_or_not = False
             curr_batch = curr_time_res[0]
             if(rowspan_or_not):
                 if(curr_batch[-1] == "NO"):
@@ -838,7 +863,28 @@ def get_fac():
                 "complete_table": complete_table, 
             }
             return jsonify(send_results)
+        
 
+@app.route("/get_sub", methods = ["GET","POST"])
+def get_sub():
+    if request.method == "POST":
+        sel_sub = request.get_json()
+        sel_sub = sel_sub["getSubject"]
+        if(sel_sub):
+            get_sub_query = "SELECT subelective FROM subjects WHERE subabb = %s"
+            cursor.execute(get_sub_query,(sel_sub,))
+            get_sub_type = cursor.fetchall()
+            if("E" in get_sub_type[0][0]):
+                get_sub_batch = [(sel_sub + "_"+ str(x)) for x in range(50)]
+                send_results = {
+                    "batchList": get_sub_batch
+                }
+                return jsonify(send_results),200
+            else:
+                send_results = {
+                    "batchList": "None"
+                }
+                return jsonify(send_results),200
 
 
 
@@ -878,10 +924,6 @@ def assign_slots():
         cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s AND subclass = %s", (subject,college_class))
         subelective = cursor.fetchall()[0][0]
         if(subelective == "YES"):
-            if(batch != "NO"):
-                errorin = "Elective subjects can only be added for whole divisions and not for batches"
-                conn.rollback()
-                return redirect(url_for("assign_slots", error = errorin))
             type_sub = "E".strip() + type_submit.strip()
         else:
             type_sub = type_submit
@@ -894,13 +936,7 @@ def assign_slots():
             if(len(check_data_slot) == 0):
                 continue
             else:
-                if(("E" in check_data_slot[0][1]) and ( "E" in type_sub)):
-                    continue
-                elif((("E" in check_data_slot[0][1])and( "E" not in type_sub)) or ("E" not in check_data_slot[0][1])and( "E" in type_sub)):
-                    errorin = "You cannot add electives or non electives when there is non elective! or elective for the slot already assigned!"
-                    conn.rollback()
-                    return redirect(url_for("assign_slots", error = errorin))
-                elif(check_data_slot[0][0] == "NO" and batch != "NO"):
+                if(check_data_slot[0][0] == "NO" and batch != "NO"):
                     errorin = "You cannot add batch when there is whole division already allotted for the slot!"
                     conn.rollback()
                     return redirect(url_for("assign_slots", error = errorin))
@@ -1013,10 +1049,10 @@ def assign_slots():
                 insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
                 try:
                     cursor.execute(insert_query,insert_para)
-                    conn.commit()
                 except mysql.Error as error:
                     conn.rollback()
                     return redirect(url_for("assign_slots", error = error))
+            conn.commit()
             error = "Successfully Inserted Slot!"
             return redirect(url_for("assign_slots", error = error))         
         else:
@@ -1045,12 +1081,10 @@ def assign_slots():
                 insert_query = f"""INSERT INTO {CURR_YEAR_SEM}(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)"""
                 try:
                     cursor.execute(insert_query,insert_para)
-                    conn.commit()
-                    error = "Successfully Inserted Slot!"
-                    return redirect(url_for("assign_slots", error = error))
                 except mysql.Error as error:
                     conn.rollback()
                     return redirect(url_for("assign_slots", error = error))
+            conn.commit()
             error = "Successfully Inserted Slot!"
             return redirect(url_for("assign_slots", error = error))   
     else:
@@ -1562,11 +1596,7 @@ def view_edit_check_api():
         cursor.execute("SELECT subelective FROM subjects WHERE subabb = %s AND subclass = %s", (slot_sub,slot_class))
         subelective = cursor.fetchall()[0][0]
         if(subelective == "YES"):
-            if(slot_batch != "NO"):
-                error = "Elective subjects can only be added for whole divisions and not for batches"
-                return(jsonify({"error": error}),400)
             type_sub = "E".strip() + slot_type.strip()
-            print(type_sub)
         else:
             type_sub = slot_type
 
@@ -1576,12 +1606,7 @@ def view_edit_check_api():
         if(len(check_data_slot) == 0):
             pass
         else:
-            if(("E" in check_data_slot[0][1]) and ( "E" in type_sub)):
-                pass
-            elif((("E" in check_data_slot[0][1])and( "E" not in type_sub)) or ("E" not in check_data_slot[0][1])and( "E" in type_sub)):
-                errorin = "You cannot add electives or non electives when there is non elective! or elective for the slot already assigned!"
-                return(jsonify({"error": errorin}),400)
-            elif(check_data_slot[0][0] == "NO" and slot_batch != "NO"):
+            if(check_data_slot[0][0] == "NO" and slot_batch != "NO"):
                 errorin = "You cannot add batch when there is whole division already allotted for the slot!"
                 return(jsonify({"error": errorin}),400)
             elif(check_data_slot[0][0] != "NO" and slot_batch == "NO"):
@@ -1772,3 +1797,4 @@ def view_swap_api():
         else:
             conn.rollback()
             return jsonify({"error": error}), 400
+        
