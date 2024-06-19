@@ -244,14 +244,14 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
                 for i in range(add_into_colspan):
                     colspan_dict[i] = colspan_dict[i] + 1
 
-                for curr_batch in data_res:
+                for curr_batch in sorted(data_res, key=(lambda x: x[5])):
                     if(rowspan_or_not):
                         colspan_val = colspan_dict[data_res.index(curr_batch)]
-                        td = f"""<td rowspan=2 colspan={colspan_val} value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>"""
+                        td = f"""<td rowspan=2 colspan={colspan_val} value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> { curr_batch[5] } <br /> {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>"""
                         table_body = table_body + td
                     else:
                         colspan_val = colspan_dict[data_res.index(curr_batch)]
-                        td = f"""<td rowspan=1 colspan={colspan_val} value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>"""
+                        td = f"""<td rowspan=1 colspan={colspan_val} value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> { curr_batch[5] } <br /> {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>"""
                         table_body = table_body + td
 
             if(len(data_res) > 0 and ("E" in data_res[0][-1]) and (data_res[0][-2] == "NO")):
