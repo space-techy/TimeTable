@@ -431,7 +431,7 @@ def select_faculty(sel_fac,CURR_BRANCH,CURR_YEAR_SEM):
                     td = f'<td value="{sel_fac}" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
                     table_body = table_body + td
                 else:
-                    td = f'<td  value="{sel_fac}" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    td = f'<td  value="{sel_fac}" rowspan=1 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
                     table_body = table_body + td
             elif(rowspan_or_not):
                 if(curr_batch[-1] == "NO"):
