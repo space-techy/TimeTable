@@ -128,20 +128,6 @@ def checkSubject(imp_year_sem,branchInto,subject,batch,type_sub,division,slot_cl
     return False
 
 
-def addElective(imp_year_sem,slot,room,faculty):
-    error = ""
-    fac_para = (slot,f"%{faculty}%")
-    room_para = (slot,room)
-    check_fac = check_data( imp_year_sem, fac_para=fac_para)
-    check_room = check_data( imp_year_sem, room_para=room_para)
-    if(check_fac):
-        error = error + f"Faculty {faculty} is already allotted for the slot! \n"
-    if(check_room):
-        error = error + f"Room {room} is already allotted for the slot! \n"
-    if((not check_fac) and (not check_room)):
-        return False
-    return error
-
 
 
 def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
@@ -244,7 +230,7 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
                 for i in range(add_into_colspan):
                     colspan_dict[i] = colspan_dict[i] + 1
 
-                for curr_batch in sorted(data_res, key=(lambda x: x[5])):
+                for curr_batch in sorted(data_res, key=(lambda x: x[5][-1])):
                     if(rowspan_or_not):
                         colspan_val = colspan_dict[data_res.index(curr_batch)]
                         td = f"""<td rowspan=2 colspan={colspan_val} value="{curr_batch[0]}" class="{daysInDict[day]+str(t+1)}"> { curr_batch[5] } <br /> {" "} { curr_batch[2] } {" "} { curr_batch[3] } </td>"""
@@ -284,7 +270,7 @@ def select_class(sel_class,CURR_BRANCH,CURR_YEAR_SEM):
                 for i in range(add_into_colspan):
                     colspan_dict[i] = colspan_dict[i] + 1
 
-                for curr_batch in sorted(data_res, key=(lambda x: x[5])):
+                for curr_batch in sorted(data_res, key=(lambda x: x[5][-1])):
                     if(rowspan_or_not):
                         colspan_val = colspan_dict[data_res.index(curr_batch)]
                         td = f"""<td rowspan=2 colspan={colspan_val}  value="{curr_batch[0]}"  class="{daysInDict[day]+str(t+1)}">  { curr_batch[5] } <br /> {" "} { curr_batch[1] } {" "} { curr_batch[2] } {" "} { curr_batch[3] }  </td>"""
@@ -438,10 +424,16 @@ def select_faculty(sel_fac,CURR_BRANCH,CURR_YEAR_SEM):
             if(len(curr_time_res) == 0):
                 table_body = table_body + f"<td class='{daysInDict[day]+str(t+1)}''></td>"
                 continue
-            if("L" in curr_time_res[0][-3]):
-                rowspan_or_not = False
             curr_batch = curr_time_res[0]
-            if(rowspan_or_not):
+            sub_type = curr_batch[3]
+            if("E" in sub_type):
+                if(rowspan_or_not):
+                    td = f'<td value="{sel_fac}" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    table_body = table_body + td
+                else:
+                    td = f'<td  value="{sel_fac}" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
+                    table_body = table_body + td
+            elif(rowspan_or_not):
                 if(curr_batch[-1] == "NO"):
                     td = f'<td value="{sel_fac}" rowspan=2 class="{daysInDict[day]+str(t+1)}">{ curr_batch[0] } {" "} { curr_batch[-2] } {" "} { curr_batch[1] } {" "} { curr_batch[2] }</td>'
                     table_body = table_body + td
@@ -871,11 +863,11 @@ def get_sub():
         sel_sub = request.get_json()
         sel_sub = sel_sub["getSubject"]
         if(sel_sub):
-            get_sub_query = "SELECT subelective FROM subjects WHERE subabb = %s"
-            cursor.execute(get_sub_query,(sel_sub,))
+            get_sub_query = "SELECT subelective FROM subjects WHERE subabb = %s AND subdep = %s"
+            cursor.execute(get_sub_query,(sel_sub,CURR_BRANCH))
             get_sub_type = cursor.fetchall()
             if("E" in get_sub_type[0][0]):
-                get_sub_batch = [(sel_sub + "_"+ str(x)) for x in range(50)]
+                get_sub_batch = [(sel_sub + "_"+ str(x + 1)) for x in range(20)]
                 send_results = {
                     "batchList": get_sub_batch
                 }
@@ -964,12 +956,6 @@ def assign_slots():
                 fac_list.append(faculty[fac_index:])
                 fac_mult = faculty
                 faculty = fac_list
-            for curr_fac in faculty:
-                for slot in slots:
-                    can_add_or_not = addElective(CURR_YEAR_SEM,slot,room,faculty)
-                    if(can_add_or_not):
-                        conn.rollback()
-                        return redirect(url_for("assign_slots", error = can_add_or_not))
             if(len(fac_mult) != 0):
                 faculty = fac_mult
             for slot in slots:
@@ -1164,9 +1150,93 @@ def show_timetable():
             cursor.execute(show_fac_query, show_fac_para)
             show_fac_res = cursor.fetchall()
             show_faculty = f"Faculty: {show_fac_res[0][0]} ({sel_fac})"
-            lec_load_query = f"SELECT COUNT(type) FROM {CURR_YEAR_SEM} WHERE faculty = %s AND type LIKE '%L%'"
-            prac_load_query = f"SELECT COUNT(type) FROM {CURR_YEAR_SEM} WHERE faculty = %s AND type LIKE '%P%'"
-            tut_load_query = f"SELECT COUNT(type) FROM {CURR_YEAR_SEM} WHERE faculty = %s AND type LIKE '%T%'"
+            lec_load_query = f"""SELECT 
+                                COUNT(*) as count
+                            FROM (
+                                SELECT 
+                                    class, 
+                                    subject, 
+                                    slot, 
+                                    day, 
+                                    time, 
+                                    faculty, 
+                                    room, 
+                                    batch, 
+                                    type, 
+                                    branch
+                                FROM 
+                                    {CURR_YEAR_SEM}
+                                WHERE faculty= %s and type like "%L%"
+                                GROUP BY 
+                                    class, 
+                                    subject, 
+                                    slot, 
+                                    day, 
+                                    time, 
+                                    faculty, 
+                                    room, 
+                                    batch, 
+                                    type, 
+                                    branch
+                            ) as unique_rows;"""
+            prac_load_query = f"""SELECT 
+                                COUNT(*) as count
+                            FROM (
+                                SELECT 
+                                    class, 
+                                    subject, 
+                                    slot, 
+                                    day, 
+                                    time, 
+                                    faculty, 
+                                    room, 
+                                    batch, 
+                                    type, 
+                                    branch
+                                FROM 
+                                    {CURR_YEAR_SEM}
+                                WHERE faculty= %s and type like "%P%"
+                                GROUP BY 
+                                    class, 
+                                    subject, 
+                                    slot, 
+                                    day, 
+                                    time, 
+                                    faculty, 
+                                    room, 
+                                    batch, 
+                                    type, 
+                                    branch
+                            ) as unique_rows;"""
+            tut_load_query = f"""SELECT 
+                                COUNT(*) as count
+                            FROM (
+                                SELECT 
+                                    class, 
+                                    subject, 
+                                    slot, 
+                                    day, 
+                                    time, 
+                                    faculty, 
+                                    room, 
+                                    batch, 
+                                    type, 
+                                    branch
+                                FROM 
+                                    {CURR_YEAR_SEM}
+                                WHERE faculty= %s and type like "%T%"
+                                GROUP BY 
+                                    class, 
+                                    subject, 
+                                    slot, 
+                                    day, 
+                                    time, 
+                                    faculty, 
+                                    room, 
+                                    batch, 
+                                    type, 
+                                    branch
+                            ) as unique_rows;"""
             cursor.execute(lec_load_query,(sel_fac,))
             lec_load = cursor.fetchall()[0][0]
             cursor.execute(prac_load_query,(sel_fac,))
@@ -1619,23 +1689,19 @@ def view_edit_check_api():
             return(jsonify({"error": check_res}),400)
         
         if("E" in type_sub):
-            canadd_or_not = addElective(CURR_YEAR_SEM,slot_slot,slot_room,slot_fac)
-            if(canadd_or_not):
-                return(jsonify({"error": canadd_or_not}),400)
-            else:
-                time_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
-                cursor.execute(time_query,(slot_slot,))
-                time_res = cursor.fetchall()[0]
-                update_query = f"INSERT INTO { CURR_YEAR_SEM }(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-                update_para = (slot_class,slot_sub,slot_slot,time_res[0],time_res[1],slot_fac,slot_room,slot_batch,type_sub,CURR_BRANCH,slot_div)
-                try:
-                    cursor.execute(update_query,update_para)
-                    conn.commit()
-                    error = f"Successfully Inserted the value inTable { CURR_YEAR_SEM }"
-                    return(jsonify({"error": error}),200)
-                except mysql.Error as error:
-                    conn.rollback()
-                    return(jsonify({"error": str(error)}),400)
+            time_query = "SELECT day,time FROM time_slots WHERE slots_name = %s"
+            cursor.execute(time_query,(slot_slot,))
+            time_res = cursor.fetchall()[0]
+            update_query = f"INSERT INTO { CURR_YEAR_SEM }(class,subject,slot,day,time,faculty,room,batch,type,branch,division) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            update_para = (slot_class,slot_sub,slot_slot,time_res[0],time_res[1],slot_fac,slot_room,slot_batch,type_sub,CURR_BRANCH,slot_div)
+            try:
+                cursor.execute(update_query,update_para)
+                conn.commit()
+                error = f"Successfully Inserted the value inTable { CURR_YEAR_SEM }"
+                return(jsonify({"error": error}),200)
+            except mysql.Error as error:
+                conn.rollback()
+                return(jsonify({"error": str(error)}),400)
 
         # To check for all the clashes
         # All parameters first
@@ -1797,4 +1863,3 @@ def view_swap_api():
         else:
             conn.rollback()
             return jsonify({"error": error}), 400
-        
